@@ -8,6 +8,9 @@
         :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; --unit-color: #0d47a1; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); -webkit-tap-highlight-color: transparent; }
         
+        /* Prevent body scroll when modal is open */
+        body.modal-open { overflow: hidden; }
+
         /* Header */
         .header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
         .logo { font-weight: 800; font-size: 1.3rem; color: var(--primary); display: flex; align-items: center; gap: 5px; }
@@ -30,7 +33,7 @@
         .product-card.in-cart { border-color: var(--accent); background: #fdfdfd; }
         
         /* IMAGE STYLE - Clickable */
-        .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 15px; background: #eee; flex-shrink: 0; display: none; cursor: zoom-in; /* Show zoom icon */ }
+        .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 15px; background: #eee; flex-shrink: 0; display: none; cursor: zoom-in; }
         
         .prod-info { flex: 1; min-width: 0; }
         .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; }
@@ -76,7 +79,7 @@
         .btn-whatsapp { background: #25D366; color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; margin-bottom: 12px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-email { background: var(--primary); color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
         
-        /* IMAGE ZOOM MODAL (New) */
+        /* IMAGE ZOOM MODAL */
         .img-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
         .img-modal-content { margin: auto; display: block; width: 90%; max-width: 700px; max-height: 80vh; object-fit: contain; border-radius: 8px; animation: zoom 0.3s; }
         .img-close { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; }
@@ -117,7 +120,7 @@
         <div class="order-summary" id="order-summary"></div>
 
         <div class="form-group"><label id="lbl-name">Firma / Name *</label><input type="text" id="customerName" placeholder="..."></div>
-        <div class="form-group"><label id="lbl-address">Adresse</label><input type="text" id="customerAddress" placeholder="..."></div>
+        <div class="form-group"><label id="lbl-address">Adresse *</label><input type="text" id="customerAddress" placeholder="..."></div>
         <div class="form-group"><label id="lbl-date">Datum</label><input type="date" id="deliveryDate"></div>
         
         <div class="form-group">
@@ -265,11 +268,17 @@
     ];
 
     const translations = {
-        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firmenname / Ihr Name", address: "Lieferadresse", date: "Lieferdatum", note: "Bemerkungen", upload: "Foto hochladen", items: "Artikel", whatsapp_msg: "Neue Bestellung:", email_sent: "Bestellung gesendet!", fill_all: "Bitte Namen eingeben!", all: "Alle" },
-        fr: { view_cart: "Panier >", checkout_title: "Vérifier la commande", name: "Nom de l'entreprise", address: "Adresse de livraison", date: "Date de livraison", note: "Remarques", upload: "Télécharger photo", items: "Articles", whatsapp_msg: "Nouvelle commande :", email_sent: "Commande envoyée !", fill_all: "Nom requis !", all: "Tous" }
+        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firma / Name *", address: "Lieferadresse *", date: "Lieferdatum", note: "Bemerkungen", upload: "Foto hochladen", items: "Artikel", whatsapp_msg: "Neue Bestellung:", email_sent: "Bestellung gesendet!", fill_all: "Bitte alle Pflichtfelder (*) ausfüllen!", all: "Alle" },
+        fr: { view_cart: "Panier >", checkout_title: "Vérifier la commande", name: "Nom / Entreprise *", address: "Adresse de livraison *", date: "Date de livraison", note: "Remarques", upload: "Télécharger photo", items: "Articles", whatsapp_msg: "Nouvelle commande :", email_sent: "Commande envoyée !", fill_all: "Veuillez remplir les champs obligatoires (*) !", all: "Tous" }
     };
 
-    // --- Unit Translation Map ---
+    // Category Translation Map
+    const catMap = {
+        "Food": { de: "Lebensmittel", fr: "Alimentation" },
+        "Packaging": { de: "Verpackung", fr: "Emballage" }
+    };
+
+    // Unit Translation Map
     const unitMap = {
         "Packung": { de: "Packung", fr: "Paquet" },
         "Pakung": { de: "Packung", fr: "Paquet" },
@@ -308,7 +317,11 @@
         const container = document.getElementById('categoryFilters');
         const t = translations[currentLang];
         let html = `<button class="filter-btn ${currentCat === 'all' ? 'active' : ''}" onclick="filterCat('all')">${t.all}</button>`;
-        cats.forEach(c => { html += `<button class="filter-btn ${currentCat === c ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`; });
+        cats.forEach(c => { 
+            let label = c;
+            if(catMap[c]) label = catMap[c][currentLang];
+            html += `<button class="filter-btn ${currentCat === c ? 'active' : ''}" onclick="filterCat('${c}')">${label}</button>`; 
+        });
         container.innerHTML = html;
     }
 
@@ -403,8 +416,17 @@
         } else { bar.style.display = 'none'; }
     }
 
-    function openCheckout() { renderCartSummary(); document.getElementById('checkoutModal').style.display = 'flex'; }
-    function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
+    // --- NEW: Scroll Lock Logic ---
+    function openCheckout() { 
+        renderCartSummary(); 
+        document.getElementById('checkoutModal').style.display = 'flex';
+        document.body.classList.add('modal-open'); // Lock scroll
+    }
+    
+    function closeCheckout() { 
+        document.getElementById('checkoutModal').style.display = 'none';
+        document.body.classList.remove('modal-open'); // Unlock scroll
+    }
     
     // IMAGE ZOOM FUNCTIONS
     function openImg(src) {
@@ -457,7 +479,10 @@
 
     function sendWhatsapp() {
         const name = document.getElementById('customerName').value;
-        if (!name) return alert(translations[currentLang].fill_all);
+        const address = document.getElementById('customerAddress').value; // Get Address
+        
+        // --- NEW VALIDATION: Check Name AND Address ---
+        if (!name || !address) return alert(translations[currentLang].fill_all);
         
         // *** 1. YOUR WHATSAPP NUMBER ***
         const myNumber = "41783249525"; 
@@ -468,7 +493,11 @@
 
     async function sendEmail() {
         const name = document.getElementById('customerName').value;
-        if (!name) return alert(translations[currentLang].fill_all);
+        const address = document.getElementById('customerAddress').value; // Get Address
+
+        // --- NEW VALIDATION: Check Name AND Address ---
+        if (!name || !address) return alert(translations[currentLang].fill_all);
+
         const btn = document.querySelector('.btn-email');
         const oldText = btn.innerHTML;
         btn.disabled = true; btn.innerHTML = "...";
