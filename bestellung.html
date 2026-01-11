@@ -2,112 +2,103 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SamPack Online Order</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SamPack Order</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; --card-bg: #fff; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; color: var(--text); -webkit-font-smoothing: antialiased; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); -webkit-tap-highlight-color: transparent; }
         
-        /* Header & Sticky Nav */
-        .header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .logo { font-weight: 800; font-size: 1.3rem; color: var(--primary); letter-spacing: -0.5px; }
-        .lang-switch button { padding: 4px 10px; border: 1px solid var(--primary); background: white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; transition: all 0.2s; }
+        /* Header */
+        .header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; font-size: 1.3rem; color: var(--primary); display: flex; align-items: center; gap: 5px; }
+        .lang-switch button { padding: 6px 12px; border: 1px solid var(--primary); background: white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
         .lang-switch button.active { background: var(--primary); color: white; }
 
         /* Search & Filter */
-        .search-container { position: relative; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 12px 15px; border: 1px solid #e1e4e8; border-radius: 10px; background: #f1f3f5; font-size: 1rem; outline: none; box-sizing: border-box; }
-        .search-input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1); }
+        .tools-container { max-width: 800px; margin: 15px auto 5px; padding: 0 15px; }
+        .search-box { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; margin-bottom: 10px; outline: none; }
+        .search-box:focus { border-color: var(--accent); }
         
-        .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; -ms-overflow-style: none; }
+        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .filter-scroll::-webkit-scrollbar { display: none; }
-        .filter-btn { white-space: nowrap; padding: 8px 16px; border: none; background: #e9ecef; border-radius: 20px; color: #495057; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
-        .filter-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 5px rgba(44, 62, 80, 0.3); }
+        .filter-btn { padding: 8px 16px; background: white; border: 1px solid #ddd; border-radius: 20px; white-space: nowrap; cursor: pointer; font-size: 0.9rem; color: #555; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Product List */
-        .container { max-width: 800px; margin: 0 auto; padding: 15px; }
+        /* Products */
+        .container { max-width: 800px; margin: 0 auto; padding: 0 15px; }
+        .product-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid transparent; transition: border 0.2s; }
+        .product-card.in-cart { border-color: var(--accent); background: #fdfdfd; }
         
-        .product-card { background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.2s; border: 1px solid transparent; }
-        .product-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        
-        /* Image Handling */
-        .prod-img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #f8f9fa; display: none; } /* Hidden by default if no src */
-        .prod-img.loaded { display: block; }
-
-        .prod-info { flex: 1; min-width: 0; }
-        .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; color: var(--primary); }
-        .prod-detail { font-size: 0.85rem; color: #868e96; margin-bottom: 4px; }
-        .prod-code { font-size: 0.75rem; color: #adb5bd; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        .prod-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; margin-right: 15px; background: #eee; }
+        .prod-info { flex: 1; min-width: 0; } /* min-width fix for text truncation */
+        .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; }
+        .prod-detail { font-size: 0.85rem; color: #888; display: flex; align-items: center; gap: 5px; }
+        .prod-code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #555; }
         .prod-price { color: var(--accent); font-weight: 800; font-size: 1.1rem; margin-top: 6px; }
 
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f8f9fa; padding: 5px; border-radius: 12px; min-width: 40px; }
-        .btn-qty { width: 32px; height: 32px; border: none; background: white; border-radius: 50%; font-size: 18px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.1s; }
-        .btn-qty:active { background: #e9ecef; }
-        .qty-val { font-weight: 700; font-size: 1rem; min-height: 20px; display: flex; align-items: center; }
-        .qty-val.hidden { visibility: hidden; }
+        /* Controls (Optimized) */
+        .controls { display: flex; align-items: center; gap: 5px; background: #f1f3f5; padding: 4px; border-radius: 12px; }
+        .btn-qty { width: 36px; height: 36px; border: none; background: white; border-radius: 10px; font-size: 20px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); touch-action: manipulation; }
+        .btn-qty:active { transform: scale(0.95); background: #eee; }
+        
+        /* Input for manual typing */
+        .qty-input { width: 40px; height: 36px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.1rem; color: #333; -moz-appearance: textfield; padding: 0; }
+        .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-input:focus { outline: none; background: #e9ecef; border-radius: 6px; }
 
         /* Cart Bar */
-        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #edf2f7; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 200; backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 200; backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
         .cart-info { display: flex; flex-direction: column; }
-        .cart-total { font-weight: 800; font-size: 1.3rem; color: var(--primary); }
-        .cart-count { font-size: 0.85rem; color: #868e96; font-weight: 600; }
-        .btn-checkout { background: var(--accent); color: white; border: none; padding: 14px 30px; border-radius: 30px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); transition: transform 0.1s; }
-        .btn-checkout:active { transform: scale(0.96); }
+        .cart-total { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
+        .cart-count { font-size: 0.85rem; color: #777; }
+        .btn-checkout { background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); transition: transform 0.2s; }
+        .btn-checkout:active { transform: scale(0.95); }
 
         /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 30px; border-radius: 20px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .close-btn { position: absolute; right: 25px; top: 20px; font-size: 28px; cursor: pointer; color: #adb5bd; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-content { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px 20px 0 0; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .close-btn { position: absolute; right: 20px; top: 20px; font-size: 28px; color: #aaa; cursor: pointer; line-height: 1; }
+        .modal h2 { margin-top: 0; color: var(--primary); }
         
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-        .form-group input { width: 100%; padding: 14px; border: 2px solid #f1f3f5; border-radius: 12px; box-sizing: border-box; font-size: 1rem; transition: border 0.2s; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.9rem; color: #555; }
+        .form-group input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; transition: border 0.2s; }
         .form-group input:focus { border-color: var(--primary); outline: none; }
         
-        .order-summary { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 0.9rem; border: 1px solid #e9ecef; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #dee2e6; }
-        .summary-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .order-summary { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 0.95rem; max-height: 200px; overflow-y: auto; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #e0e0e0; padding-bottom: 8px; }
+        .summary-row:last-child { border: none; margin: 0; padding: 0; }
 
-        .btn-action { width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; }
-        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2); }
-        .btn-email { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2); }
-        .btn-action:active { transform: scale(0.98); }
-
-        .highlight-match { background-color: #fff3cd; }
+        .btn-whatsapp { background: #25D366; color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; margin-bottom: 12px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-email { background: var(--primary); color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="top-row">
-        <div class="logo">📦 SamPack</div>
-        <div class="lang-switch">
-            <button id="btn-de" class="active" onclick="setLang('de')">DE</button>
-            <button id="btn-fr" onclick="setLang('fr')">FR</button>
-        </div>
+    <div class="logo">📦 SamPack</div>
+    <div class="lang-switch">
+        <button id="btn-de" class="active" onclick="setLang('de')">DE</button>
+        <button id="btn-fr" onclick="setLang('fr')">FR</button>
     </div>
-    
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Suchen / Search..." oninput="filterProducts()">
-    </div>
+</div>
 
-    <div class="filter-scroll" id="filter-buttons">
-        <button class="filter-btn active" onclick="setCategory('all')">Alle</button>
-        <button class="filter-btn" onclick="setCategory('packaging')">Verpackung</button>
-        <button class="filter-btn" onclick="setCategory('food')">Lebensmittel</button>
-        <button class="filter-btn" onclick="setCategory('sauce')">Saucen</button>
-        <button class="filter-btn" onclick="setCategory('hygiene')">Hygiene</button>
-    </div>
+<div class="tools-container">
+    <input type="text" id="searchInput" class="search-box" placeholder="Suchen / Search..." oninput="filterProducts()">
+    <div class="filter-scroll" id="categoryFilters">
+        </div>
 </div>
 
 <div class="container" id="product-list">
     </div>
 
-<div class="cart-bar">
+<div class="cart-bar" id="cartBar" style="display:none">
     <div class="cart-info">
-        <span class="cart-total" id="total-price">0.00 CHF</span>
+        <span class="cart-total"><span id="total-price">0.00</span> CHF</span>
         <span class="cart-count" id="item-count">0 Artikel</span>
     </div>
     <button class="btn-checkout" onclick="openCheckout()" id="lbl-view-cart">Warenkorb ></button>
@@ -116,175 +107,62 @@
 <div class="modal" id="checkoutModal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeCheckout()">&times;</span>
-        <h2 id="lbl-checkout-title" style="margin-top:0; color:var(--primary);">Bestellung prüfen</h2>
+        <h2 id="lbl-checkout-title">Bestellung</h2>
         
         <div class="order-summary" id="order-summary"></div>
 
         <div class="form-group">
-            <label id="lbl-name">Firmenname / Kontakt</label>
-            <input type="text" id="customerName" placeholder="Name...">
+            <label id="lbl-name">Firma / Name *</label>
+            <input type="text" id="customerName" placeholder="...">
         </div>
         <div class="form-group">
             <label id="lbl-address">Adresse</label>
-            <input type="text" id="customerAddress" placeholder="Strasse, Ort...">
+            <input type="text" id="customerAddress" placeholder="...">
         </div>
         <div class="form-group">
-            <label id="lbl-date">Lieferdatum</label>
+            <label id="lbl-date">Datum</label>
             <input type="date" id="deliveryDate">
         </div>
 
-        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>
+        <button class="btn-whatsapp" onclick="sendWhatsapp()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.654-.698c.99.54 1.743.836 2.808.836h.006c3.181 0 5.768-2.587 5.768-5.771 0-1.539-.599-2.99-1.687-4.081s-2.535-1.696-4.089-1.697zm6.09 9.92c-.31.867-1.742 1.638-2.368 1.693-.538.048-1.253.253-3.692-.72-2.369-.945-3.882-3.344-4.002-3.504-.119-.16-1.15-1.526-1.15-2.915s.709-2.185 1.258-2.618c.2-.158.468-.225.755-.225.21 0 .428.02.602.1.186.085.62.998.795 1.439.145.367.149.615.015.89-.136.276-.41.597-.624.815-.178.18-.396.34-.143.774.25.431 1.11 1.838 2.383 2.971.492.438.922.756 1.25.915.328.16.71.134 1.025-.23.23-.267.97-1.135 1.229-1.524.258-.39.516-.329.865-.2.349.129 2.204 1.04 2.582 1.229.379.189.63.28.719.435.09.156.09 2.333-.306 3.199z"/></svg>
             WhatsApp
         </button>
-        <button class="btn-action btn-email" onclick="sendEmail()">
-            📧 Email Senden
+        <button class="btn-email" onclick="sendEmail()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
         </button>
     </div>
 </div>
 
 <script>
-    // --- DATABASE ---
-    // لیست کامل محصولات استخراج شده از فایل شما
+    // --- YOUR DATA HERE (Paste from Excel later) ---
     const products = [
-        { id: "14", cat: "food", code: "001", name: "Pommes, Fine Quality-10 M", price: 3.60, unit: "kg" },
-        { id: "19", cat: "food", code: "0010", name: "Chicken Nugget 10 KG", price: 89.00, unit: "Packung" },
-        { id: "117", cat: "food", code: "0010", name: "Pommes frites -6.6 mm", price: 30.00, unit: "Packung" },
-        { id: "17", cat: "food", code: "0011", name: "Cordon Bleu", price: 75.00, unit: "Packung" },
-        { id: "16", cat: "food", code: "0012", name: "Thunfisch", price: 25.00, unit: "Packung" },
-        { id: "20", cat: "food", code: "0012", name: "Schnitzel 5 Kg", price: 90.00, unit: "Packung" },
-        { id: "36", cat: "food", code: "0013", name: "Frittes ÖL, 10 liter", price: 38.00, unit: "Stk" },
-        { id: "132", cat: "packaging", code: "0015", name: "Plastiksack tüte ,klein", price: 18.00, unit: "Packung" },
-        { id: "122", cat: "food", code: "002", name: "Pommes,Fine Quality-7mm", price: 3.50, unit: "kg" },
-        { id: "60", cat: "packaging", code: "0020", name: "Plastiksack tüte, Mittlere", price: 18.00, unit: "Packung" },
-        { id: "30", cat: "sauce", code: "0026", name: "Nawahl`s , Andalouse 12x950ml", price: 55.00, unit: "Packung" },
-        { id: "15", cat: "food", code: "003", name: "Pommes, Fine Quality-10 M", price: 35.00, unit: "kg" },
-        { id: "12", cat: "food", code: "004", name: "Pommes, Fine Quality-10 M", price: 3.20, unit: "kg" },
-        { id: "123", cat: "food", code: "005", name: "Pommes Frits, Normal ,9.9 mm", price: 35.00, unit: "kg" },
-        { id: "133", cat: "packaging", code: "0050", name: "Plastiksack tüte ,gross", price: 18.00, unit: "Packung" },
-        { id: "124", cat: "food", code: "006", name: "Pommes, Fine Quality-10 M", price: 3.50, unit: "kg" },
-        { id: "1", cat: "food", code: "007", name: "Mozzarella, 45 % Fett-12 Kg", price: 72.00, unit: "Packung" },
-        { id: "143", cat: "food", code: "007S", name: "Mozzarella, 100 % Fett, 12 Kg", price: 78.00, unit: "Packung" },
-        { id: "10", cat: "food", code: "008", name: "Mozzarella, Zucker, 45 % Fett-10 Kg", price: 75.00, unit: "Packung" },
-        { id: "131", cat: "packaging", code: "0083", name: "Pizza Box Italy 32x32x43cm", price: 23.00, unit: "Packung" },
-        { id: "18", cat: "food", code: "009", name: "Hänchen Brust-12 kg", price: 90.00, unit: "Packung" },
-        { id: "56", cat: "hygiene", code: "0981", name: "Bulky Servietten , Rot 40x40", price: 50.00, unit: "Packung" },
-        { id: "67", cat: "hygiene", code: "0990", name: "Serviette, 5000 Stück", price: 29.00, unit: "Packung" },
-        { id: "120", cat: "hygiene", code: "0998", name: "Serviette 1/8 Take Away", price: 25.00, unit: "Packung" },
-        { id: "58", cat: "hygiene", code: "1002", name: "Papierhandtuch", price: 30.00, unit: "Packung" },
-        { id: "63", cat: "hygiene", code: "1003", name: "Rollenpapier - 6 Rollen", price: 19.00, unit: "Packung" },
-        { id: "121", cat: "hygiene", code: "1004", name: "Rollenpapier - 12 Rollen", price: 20.00, unit: "Packung" },
-        { id: "115", cat: "hygiene", code: "1005", name: "Toilette Papier", price: 20.00, unit: "Packung" },
-        { id: "125", cat: "hygiene", code: "1006", name: "Küchen Rollen, 32 St", price: 33.00, unit: "Packung" },
-        { id: "74", cat: "packaging", code: "1050", name: "Donner Box, 16oz, klein", price: 45.00, unit: "Packung" },
-        { id: "75", cat: "packaging", code: "1060", name: "Donner Box, 26oz, mittlere", price: 45.00, unit: "Packung" },
-        { id: "76", cat: "packaging", code: "1070", name: "Donner box, 32oz, Gross", price: 45.00, unit: "Packung" },
-        { id: "65", cat: "hygiene", code: "1541", name: "Gabel (Forks)", price: 30.00, unit: "Packung" },
-        { id: "114", cat: "packaging", code: "1676", name: "Lunch-Box-IP 10 Weiß", price: 53.48, unit: "Packung" },
-        { id: "134", cat: "packaging", code: "1681", name: "Menu Box, IP 4", price: 33.00, unit: "Packung" },
-        { id: "111", cat: "packaging", code: "1681", name: "Menü-Box-3geteilt-weiss", price: 30.00, unit: "Packung" },
-        { id: "43", cat: "sauce", code: "2023", name: "Remia Cocktail Sauce, 10 Kg", price: 29.00, unit: "Stk" },
-        { id: "32", cat: "sauce", code: "2025", name: "Nawahl`s Algerien 12x950ml", price: 55.00, unit: "Packung" },
-        { id: "26", cat: "sauce", code: "2026", name: "Nawals Samurai 12x950ml", price: 55.00, unit: "Packung" },
-        { id: "28", cat: "sauce", code: "2029", name: "Nawahl`s Tartar 12x950ml", price: 55.00, unit: "Packung" },
-        { id: "27", cat: "sauce", code: "2030", name: "Nawals Barbecue 12x950ml", price: 55.00, unit: "Packung" },
-        { id: "107", cat: "packaging", code: "2032A", name: "Frischhaltefolie 45 cm", price: 40.00, unit: "Stk" },
-        { id: "59", cat: "packaging", code: "2045", name: "Donner tüten", price: 17.00, unit: "Packung" },
-        { id: "126", cat: "packaging", code: "2046", name: "Dürüm Tüte", price: 20.00, unit: "Packung" },
-        { id: "57", cat: "packaging", code: "2070", name: "Aluminium Folie 14mm (4 Stk)", price: 25.00, unit: "Packung" },
-        { id: "83", cat: "packaging", code: "2530", name: "Aluminium schale 100 stück", price: 37.00, unit: "Packung" },
-        { id: "127", cat: "packaging", code: "511", name: "Salat Schale - 375 ml", price: 55.00, unit: "Packung" },
-        { id: "146", cat: "hygiene", code: "Air", name: "Airlaid Servietten Rot", price: 130.00, unit: "Packung" },
-        { id: "82", cat: "packaging", code: "Alu", name: "Aluminium box 2000 cc", price: 75.00, unit: "Packung" },
-        { id: "81", cat: "packaging", code: "Alu", name: "Aluminium Box 2380 cc", price: 80.00, unit: "Packung" },
-        { id: "22", cat: "food", code: "Ant", name: "Antalya Brot-9,7 Kg", price: 27.00, unit: "Packung" },
-        { id: "51", cat: "food", code: "Bas", name: "Basilikum", price: 20.00, unit: "Packung" },
-        { id: "69", cat: "hygiene", code: "Bes", name: "Besteck Taschen", price: 50.00, unit: "Packung" },
-        { id: "62", cat: "hygiene", code: "Bes", name: "Besteck-Set", price: 24.00, unit: "Packung" },
-        { id: "72", cat: "packaging", code: "Bio", name: "Bio-Salatschalen 1000 ml", price: 80.00, unit: "Packung" },
-        { id: "73", cat: "packaging", code: "Bio", name: "Bio-Salatschalen 1300 ml", price: 90.00, unit: "Packung" },
-        { id: "109", cat: "packaging", code: "Bio", name: "Bio-Salatschalen 375 ml", price: 65.00, unit: "Packung" },
-        { id: "70", cat: "packaging", code: "Bio", name: "Bio-Salatschalen 500 ml", price: 50.00, unit: "Packung" },
-        { id: "71", cat: "packaging", code: "Bio", name: "Bio-Salatschalen 750 ml", price: 65.00, unit: "Packung" },
-        { id: "55", cat: "hygiene", code: "Bulk", name: "Bulky Servietten 40x40", price: 50.00, unit: "Packung" },
-        { id: "48", cat: "food", code: "Chi", name: "Chili Feuer - mix 50", price: 20.00, unit: "Packung" },
-        { id: "137", cat: "sauce", code: "Chi", name: "Chili-Cheese Sauce", price: 45.00, unit: "Packung" },
-        { id: "119", cat: "food", code: "Dil", name: "Dill", price: 17.00, unit: "Packung" },
-        { id: "110", cat: "packaging", code: "Dur", name: "Dürum Tüte", price: 25.00, unit: "Packung" },
-        { id: "21", cat: "food", code: "Fal", name: "Falafel", price: 45.00, unit: "Packung" },
-        { id: "94", cat: "packaging", code: "Food", name: "Food Container box", price: 200.00, unit: "Packung" },
-        { id: "93", cat: "packaging", code: "Food", name: "Food Container box 190x60", price: 200.00, unit: "Packung" },
-        { id: "104", cat: "packaging", code: "Fri", name: "Frischpack zuschnitte", price: 45.00, unit: "Packung" },
-        { id: "118", cat: "packaging", code: "Fri", name: "Frishhaltfolie , normal", price: 20.00, unit: "Packung" },
-        { id: "38", cat: "food", code: "Oil", name: "Frittes ÖL, 20 Liter", price: 80.00, unit: "Stk" },
-        { id: "23", cat: "food", code: "Oli", name: "Geschnittene Oliven", price: 39.00, unit: "Packung" },
-        { id: "106", cat: "packaging", code: "Ham", name: "Hamburger Box- papstar", price: 37.70, unit: "Packung" },
-        { id: "144", cat: "hygiene", code: "Glo", name: "Handschuhe-L", price: 35.00, unit: "Packung" },
-        { id: "145", cat: "hygiene", code: "Glo", name: "Handschuhe-M", price: 35.00, unit: "Packung" },
-        { id: "98", cat: "packaging", code: "Kaf", name: "Kaffebecher", price: 30.00, unit: "Stk" },
-        { id: "130", cat: "sauce", code: "Ket", name: "Ketchup Rozan 10 Kg", price: 18.00, unit: "Stk" },
-        { id: "139", cat: "food", code: "Kim", name: "Kimyon-Kreuzkümmel", price: 11.90, unit: "Packung" },
-        { id: "53", cat: "food", code: "Kno", name: "Knobloch Pulver", price: 20.00, unit: "Packung" },
-        { id: "66", cat: "hygiene", code: "Lof", name: "Löffel (Spoons)", price: 30.00, unit: "Packung" },
-        { id: "95", cat: "packaging", code: "Lun", name: "lunch menu box 375 ml", price: 60.00, unit: "Packung" },
-        { id: "96", cat: "packaging", code: "Lun", name: "Lunch menu box 500 ml", price: 60.00, unit: "Packung" },
-        { id: "97", cat: "packaging", code: "Lun", name: "Lunch menu box 750 ml", price: 60.00, unit: "Packung" },
-        { id: "129", cat: "sauce", code: "May", name: "Mayonnaise Rozan 10 Kg", price: 23.00, unit: "Stk" },
-        { id: "140", cat: "sauce", code: "May", name: "Mayonnaise Tanriöver 10 L", price: 23.00, unit: "Stk" },
-        { id: "108", cat: "packaging", code: "Men", name: "Menü-Box 2geteilt weiss", price: 37.00, unit: "Packung" },
-        { id: "68", cat: "hygiene", code: "Mes", name: "Messer (Knives)", price: 29.00, unit: "Packung" },
-        { id: "29", cat: "sauce", code: "Naw", name: "Nawahl`s Biggy Burger", price: 55.00, unit: "Packung" },
-        { id: "31", cat: "sauce", code: "Naw", name: "Nawahl`s Curry 12er", price: 55.00, unit: "Packung" },
-        { id: "25", cat: "sauce", code: "Naw", name: "Nawahl`s Marocain", price: 55.00, unit: "Packung" },
-        { id: "138", cat: "food", code: "Oli", name: "Oliven Öl", price: 28.90, unit: "Stk" },
-        { id: "50", cat: "food", code: "Ore", name: "Oregano", price: 20.00, unit: "Packung" },
-        { id: "113", cat: "packaging", code: "Pap", name: "Papier à pizza", price: 40.00, unit: "Packung" },
-        { id: "101", cat: "packaging", code: "Bag", name: "Papiertasche Mittel", price: 35.00, unit: "Packung" },
-        { id: "100", cat: "packaging", code: "Bag", name: "Papiertasche Klein", price: 35.00, unit: "Packung" },
-        { id: "102", cat: "packaging", code: "Bag", name: "Papiertasche Gross", price: 35.00, unit: "Packung" },
-        { id: "42", cat: "food", code: "Pet", name: "Petersille", price: 20.00, unit: "Packung" },
-        { id: "41", cat: "food", code: "Pfe", name: "Pfeffer schwarz", price: 20.00, unit: "Packung" },
-        { id: "40", cat: "food", code: "Pfe", name: "Pfefferminz", price: 20.00, unit: "Packung" },
-        { id: "88", cat: "packaging", code: "Piz", name: "Pizza Box 32x32x4 cm", price: 23.00, unit: "Packung" },
-        { id: "89", cat: "packaging", code: "Piz", name: "Pizza Box 36x36x4 cm", price: 24.00, unit: "Packung" },
-        { id: "91", cat: "packaging", code: "Piz", name: "Pizza Box 40x40x4 cm", price: 45.00, unit: "Packung" },
-        { id: "90", cat: "packaging", code: "Piz", name: "Pizza Box 45x45x4.5 cm", price: 45.00, unit: "Packung" },
-        { id: "85", cat: "packaging", code: "Piz", name: "Pizza Box 24x24x4 cm", price: 20.00, unit: "Packung" },
-        { id: "84", cat: "packaging", code: "Piz", name: "Pizza Box 28x28x4 cm", price: 20.00, unit: "Packung" },
-        { id: "87", cat: "packaging", code: "Piz", name: "Pizza Box 30x30x4 cm", price: 24.00, unit: "Packung" },
-        { id: "86", cat: "packaging", code: "Piz", name: "Pizza Box 33x33x4 cm", price: 24.00, unit: "Packung" },
-        { id: "92", cat: "packaging", code: "Piz", name: "Pizza Box 50x50x4.5 cm", price: 48.00, unit: "Packung" },
-        { id: "103", cat: "packaging", code: "Piz", name: "Pizza Calzone box", price: 25.00, unit: "Packung" },
-        { id: "142", cat: "sauce", code: "Tom", name: "Pizza Tomatensauce", price: 30.00, unit: "Stk" },
-        { id: "61", cat: "packaging", code: "Pla", name: "Plastiktütenrollen 24 stück", price: 45.00, unit: "Packung" },
-        { id: "52", cat: "food", code: "Pul", name: "Pul Bieber", price: 20.00, unit: "Packung" },
-        { id: "44", cat: "sauce", code: "Rem", name: "Remia Mayonnaise 10 Kg", price: 27.00, unit: "Stk" },
-        { id: "78", cat: "packaging", code: "Sau", name: "Sauceenschale 50 ml", price: 49.50, unit: "Packung" },
-        { id: "80", cat: "packaging", code: "Sau", name: "Sauceenschalen 120 ml", price: 49.50, unit: "Packung" },
-        { id: "77", cat: "packaging", code: "Sau", name: "Sauceenschalen 30 ml", price: 49.00, unit: "Packung" },
-        { id: "79", cat: "packaging", code: "Sau", name: "Sauceenschalen 80 ml", price: 40.00, unit: "Packung" },
-        { id: "47", cat: "sauce", code: "Sch", name: "Scharf Sauce burcu 10Kg", price: 28.00, unit: "Stk" },
-        { id: "24", cat: "sauce", code: "Sch", name: "Scharf Sauce 12er", price: 49.00, unit: "Packung" },
-        { id: "54", cat: "food", code: "Sch", name: "schwarzkümmel", price: 20.00, unit: "Packung" },
-        { id: "39", cat: "food", code: "Son", name: "Sonnenblumen Öl, 1 Liter", price: 33.00, unit: "Packung" },
-        { id: "35", cat: "food", code: "Son", name: "Sonnenblumen Öl, 10 Liter", price: 35.00, unit: "Stk" },
-        { id: "49", cat: "food", code: "Sum", name: "Sumachpulver", price: 20.00, unit: "Packung" },
-        { id: "64", cat: "hygiene", code: "Toi", name: "Toilettenpapier Rolle", price: 26.00, unit: "Packung" },
-        { id: "128", cat: "packaging", code: "Wac", name: "Wach papier", price: 45.00, unit: "Packung" }
+        { id: "002", cat: "Food", nameDE: "Pommes Frites (7mm)", nameFR: "Pommes Frites (7mm)", price: 3.50, unit: "kg" },
+        { id: "009", cat: "Food", nameDE: "Hähnchenbrust", nameFR: "Poitrine de poulet", price: 94.00, unit: "Box" },
+        { id: "2070", cat: "Packaging", nameDE: "Aluminiumfolie 14mm", nameFR: "Papier aluminium 14mm", price: 25.00, unit: "Pack" },
+        { id: "2032A", cat: "Packaging", nameDE: "Frischhaltefolie 45cm", nameFR: "Film alimentaire 45cm", price: 45.00, unit: "Stk" },
+        { id: "sauce", cat: "Packaging", nameDE: "Saucenschalen 50ml", nameFR: "Pots à sauce 50ml", price: 45.00, unit: "Box" },
+        { id: "16750", cat: "Packaging", nameDE: "Lunch-Box IP 9 Weiss", nameFR: "Boîte repas IP 9 Blanc", price: 38.00, unit: "Pack" },
+        { id: "bags", cat: "Packaging", nameDE: "Bestecktaschen Creme", nameFR: "Pochettes couverts Crème", price: 60.00, unit: "Pack" },
+        { id: "101", cat: "Food", nameDE: "Ketchup Sachets", nameFR: "Ketchup Sachets", price: 15.50, unit: "Box" },
+        { id: "102", cat: "Food", nameDE: "Mayonnaise Sachets", nameFR: "Mayonnaise Sachets", price: 16.00, unit: "Box" },
+        { id: "305", cat: "Packaging", nameDE: "Pizza Karton 32cm", nameFR: "Boîte à pizza 32cm", price: 22.00, unit: "Pack" }
     ];
 
     const translations = {
-        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firmenname / Kontakt", address: "Lieferadresse", date: "Lieferdatum", items: "Artikel", whatsapp_msg: "Hallo, neue Bestellung:", email_sent: "Bestellung gesendet! ✅", fill_all: "Bitte Name eingeben!", search_ph: "🔍 Suchen...", all: "Alle", packaging: "Verpackung", food: "Lebensmittel", sauce: "Saucen", hygiene: "Hygiene" },
-        fr: { view_cart: "Panier >", checkout_title: "Vérifier commande", name: "Nom / Contact", address: "Adresse livraison", date: "Date livraison", items: "Articles", whatsapp_msg: "Bonjour, nouvelle commande:", email_sent: "Commande envoyée! ✅", fill_all: "Entrez votre nom SVP!", search_ph: "🔍 Rechercher...", all: "Tous", packaging: "Emballage", food: "Alimentation", sauce: "Sauces", hygiene: "Hygiène" }
+        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firmenname / Ihr Name", address: "Lieferadresse", date: "Lieferdatum", items: "Artikel", whatsapp_msg: "Neue Bestellung:", email_sent: "Bestellung gesendet!", fill_all: "Bitte Namen eingeben!", all: "Alle" },
+        fr: { view_cart: "Panier >", checkout_title: "Vérifier la commande", name: "Nom de l'entreprise", address: "Adresse de livraison", date: "Date de livraison", items: "Articles", whatsapp_msg: "Nouvelle commande :", email_sent: "Commande envoyée !", fill_all: "Nom requis !", all: "Tous" }
     };
 
     let cart = {};
     let currentLang = 'de';
-    let currentCategory = 'all';
+    let currentCat = 'all';
 
-    function init() { 
-        filterProducts(); 
-        document.getElementById('deliveryDate').valueAsDate = new Date(); 
+    function init() {
+        renderCategories();
+        renderProducts();
+        document.getElementById('deliveryDate').valueAsDate = new Date();
     }
 
     function setLang(lang) {
@@ -292,88 +170,141 @@
         document.getElementById('btn-de').className = lang === 'de' ? 'active' : '';
         document.getElementById('btn-fr').className = lang === 'fr' ? 'active' : '';
         
+        // Update labels
         const t = translations[lang];
         document.getElementById('lbl-view-cart').innerText = t.view_cart;
         document.getElementById('lbl-checkout-title').innerText = t.checkout_title;
         document.getElementById('lbl-name').innerText = t.name;
         document.getElementById('lbl-address').innerText = t.address;
         document.getElementById('lbl-date').innerText = t.date;
-        document.getElementById('searchInput').placeholder = t.search_ph;
-
-        // Update Filter Button Text
-        const btns = document.getElementById('filter-buttons').children;
-        btns[0].innerText = t.all;
-        btns[1].innerText = t.packaging;
-        btns[2].innerText = t.food;
-        btns[3].innerText = t.sauce;
-        btns[4].innerText = t.hygiene;
-
-        if(document.getElementById('checkoutModal').style.display === 'flex') renderCartSummary();
+        document.getElementById('searchInput').placeholder = lang === 'de' ? "Suchen..." : "Rechercher...";
+        
+        renderCategories(); // Update cat names
+        renderProducts();   // Update prod names
     }
 
-    function setCategory(cat) {
-        currentCategory = cat;
-        // Update styling
-        const btns = document.querySelectorAll('.filter-btn');
-        btns.forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+    function renderCategories() {
+        const cats = [...new Set(products.map(p => p.cat))];
+        const container = document.getElementById('categoryFilters');
+        const t = translations[currentLang];
         
+        let html = `<button class="filter-btn ${currentCat === 'all' ? 'active' : ''}" onclick="filterCat('all')">${t.all}</button>`;
+        cats.forEach(c => {
+            html += `<button class="filter-btn ${currentCat === c ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function filterCat(cat) {
+        currentCat = cat;
+        renderCategories();
         filterProducts();
     }
 
     function filterProducts() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const container = document.getElementById('product-list');
-        container.innerHTML = "";
-
-        products.forEach(p => {
-            // Check Category
-            if (currentCategory !== 'all' && p.cat !== currentCategory) return;
-            // Check Search
-            if (searchTerm && !p.name.toLowerCase().includes(searchTerm) && !p.code.toLowerCase().includes(searchTerm)) return;
-
-            const qty = cart[p.id] || 0;
-            // Image Logic: tries to load images/ID.jpg
-            const imgPath = `images/${p.code}.jpg`; 
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.product-card');
+        
+        cards.forEach(card => {
+            const cat = card.getAttribute('data-cat');
+            const name = card.getAttribute('data-name').toLowerCase();
+            const id = card.getAttribute('data-id').toLowerCase();
             
-            container.innerHTML += `
-            <div class="product-card">
-                <img src="${imgPath}" class="prod-img" onload="this.classList.add('loaded')" onerror="this.style.display='none'">
-                <div class="prod-info">
-                    <div class="prod-name">${p.name}</div>
-                    <div class="prod-detail">${p.unit} <span class="prod-code">#${p.code}</span></div>
-                    <div class="prod-price">${p.price.toFixed(2)} CHF</div>
-                </div>
-                <div class="controls">
-                    <button class="btn-qty" onclick="updateCart('${p.id}', 1)">+</button>
-                    <div class="qty-val ${qty===0?'hidden':''}">${qty}</div>
-                    <button class="btn-qty" onclick="updateCart('${p.id}', -1)" style="${qty===0?'visibility:hidden':''}">-</button>
-                </div>
-            </div>`;
+            const matchesSearch = name.includes(query) || id.includes(query);
+            const matchesCat = currentCat === 'all' || currentCat === cat;
+
+            if (matchesSearch && matchesCat) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
         });
     }
 
-    function updateCart(id, change) {
+    function renderProducts() {
+        const container = document.getElementById('product-list');
+        container.innerHTML = "";
+        
+        products.forEach(p => {
+            const name = currentLang === 'de' ? p.nameDE : p.nameFR;
+            const qty = cart[p.id] || 0;
+            const imgPath = `https://niksampack.github.io/images/${p.id}.jpg`; // Placeholder logic
+            
+            // Note: input type='number' replaces the div
+            const html = `
+            <div class="product-card ${qty > 0 ? 'in-cart' : ''}" data-cat="${p.cat}" data-name="${name}" data-id="${p.id}" id="card-${p.id}">
+                <div class="prod-info">
+                    <div class="prod-name">${name}</div>
+                    <div class="prod-detail"><span class="prod-code">#${p.id}</span> ${p.unit}</div>
+                    <div class="prod-price">${p.price.toFixed(2)}</div>
+                </div>
+                <div class="controls">
+                    <button class="btn-qty" onclick="changeQty('${p.id}', -1)">-</button>
+                    <input type="number" class="qty-input" id="qty-${p.id}" value="${qty > 0 ? qty : ''}" placeholder="0" onchange="manualQty('${p.id}', this.value)">
+                    <button class="btn-qty" onclick="changeQty('${p.id}', 1)">+</button>
+                </div>
+            </div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // --- Optimized Cart Logic ---
+    function changeQty(id, delta) {
         if (!cart[id]) cart[id] = 0;
-        cart[id] += change;
+        cart[id] += delta;
         if (cart[id] <= 0) delete cart[id];
         
-        filterProducts(); // Re-render to show qty updates
+        updateUI(id);
+    }
+
+    function manualQty(id, val) {
+        const num = parseInt(val);
+        if (isNaN(num) || num <= 0) {
+            delete cart[id];
+        } else {
+            cart[id] = num;
+        }
+        updateUI(id);
+    }
+
+    function updateUI(id) {
+        // Only update specific elements, NOT the whole list!
+        const input = document.getElementById(`qty-${id}`);
+        const card = document.getElementById(`card-${id}`);
+        
+        if (input) input.value = cart[id] ? cart[id] : '';
+        
+        if (cart[id]) {
+            card.classList.add('in-cart');
+        } else {
+            card.classList.remove('in-cart');
+        }
         updateCartBar();
     }
 
     function updateCartBar() {
-        let total = 0; let count = 0;
+        let total = 0;
+        let count = 0;
         for (const [id, qty] of Object.entries(cart)) {
             const p = products.find(x => x.id === id);
-            if(p) { total += p.price * qty; count += qty; }
+            if(p) {
+                total += p.price * qty;
+                count += qty;
+            }
         }
-        document.getElementById('total-price').innerText = total.toFixed(2) + " CHF";
-        document.getElementById('item-count').innerText = `${count} ${translations[currentLang].items}`;
+        
+        const bar = document.getElementById('cartBar');
+        if (count > 0) {
+            bar.style.display = 'flex';
+            document.getElementById('total-price').innerText = total.toFixed(2);
+            document.getElementById('item-count').innerText = `${count} ${translations[currentLang].items}`;
+        } else {
+            bar.style.display = 'none';
+        }
     }
 
+    // --- Checkout & Send ---
     function openCheckout() {
-        if (Object.keys(cart).length === 0) return;
         renderCartSummary();
         document.getElementById('checkoutModal').style.display = 'flex';
     }
@@ -385,14 +316,17 @@
         let total = 0;
         for (const [id, qty] of Object.entries(cart)) {
             const p = products.find(x => x.id === id);
+            const name = currentLang === 'de' ? p.nameDE : p.nameFR;
             const lineTotal = p.price * qty;
             total += lineTotal;
-            div.innerHTML += `<div class="summary-row">
-                <span>${qty}x ${p.name}</span>
+            div.innerHTML += `
+            <div class="summary-row">
+                <span style="font-weight:bold">${qty}x</span>
+                <span style="flex:1; margin:0 10px">${name} <small>(#${p.id})</small></span>
                 <span>${lineTotal.toFixed(2)}</span>
             </div>`;
         }
-        div.innerHTML += `<div style="text-align:right; font-weight:800; margin-top:10px; border-top:2px solid #eee; padding-top:10px; font-size:1.1rem;">Total: ${total.toFixed(2)} CHF</div>`;
+        div.innerHTML += `<div style="text-align:right; font-weight:800; margin-top:15px; border-top:1px solid #ddd; padding-top:10px;">Total: ${total.toFixed(2)} CHF</div>`;
     }
 
     function getOrderText() {
@@ -403,10 +337,13 @@
         
         let text = `*${t.whatsapp_msg}*\n`;
         text += `👤 ${name}\n📍 ${address}\n📅 ${date}\n\n`;
+        
         let total = 0;
         for (const [id, qty] of Object.entries(cart)) {
             const p = products.find(x => x.id === id);
-            text += `▪️ ${qty}x ${p.name}\n`;
+            const pName = currentLang === 'de' ? p.nameDE : p.nameFR;
+            // FIXED: Added Qty and ID explicitly
+            text += `▪️ ${qty}x ${pName} [Code:${p.id}]\n`;
             total += p.price * qty;
         }
         text += `\n*Total: ${total.toFixed(2)} CHF*`;
@@ -417,7 +354,7 @@
         const name = document.getElementById('customerName').value;
         if (!name) return alert(translations[currentLang].fill_all);
         
-        // *** شماره واتس‌اپ شما ***
+        // *** YOUR PHONE NUMBER ***
         const myNumber = "41783249525"; 
         
         const text = encodeURIComponent(getOrderText());
@@ -428,27 +365,25 @@
         const name = document.getElementById('customerName').value;
         if (!name) return alert(translations[currentLang].fill_all);
         const btn = document.querySelector('.btn-email');
-        const oldText = btn.innerText;
-        btn.disabled = true; btn.innerText = "...";
+        const oldText = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = "...";
 
         try {
             const formData = new FormData();
-            
-            // *** کلید WEB3FORMS خود را اینجا وارد کنید ***
+            // *** YOUR ACCESS KEY ***
             formData.append("access_key", "01c92836-701d-4faf-91b9-3836ee825485"); 
 
-            formData.append("subject", `New Order: ${name}`);
+            formData.append("subject", `Bestellung: ${name}`);
             formData.append("message", getOrderText());
             const res = await fetch("https://api.web3forms.com/submit", { method: "POST", body: formData });
             if (res.ok) {
                 alert(translations[currentLang].email_sent);
                 closeCheckout();
                 cart = {};
-                filterProducts();
-                updateCartBar();
-            } else { alert("Error sending email."); }
-        } catch (e) { alert("Connection error."); }
-        btn.disabled = false; btn.innerText = oldText;
+                products.forEach(p => updateUI(p.id)); // Reset UI
+            } else { alert("Error."); }
+        } catch (e) { alert("Error."); }
+        btn.disabled = false; btn.innerHTML = oldText;
     }
 
     init();
