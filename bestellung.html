@@ -29,8 +29,8 @@
         .product-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid transparent; transition: border 0.2s; }
         .product-card.in-cart { border-color: var(--accent); background: #fdfdfd; }
         
-        /* IMAGE STYLE */
-        .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 15px; background: #eee; flex-shrink: 0; display: none; /* Hidden by default until loaded */ }
+        /* IMAGE STYLE - Clickable */
+        .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 15px; background: #eee; flex-shrink: 0; display: none; cursor: zoom-in; /* Show zoom icon */ }
         
         .prod-info { flex: 1; min-width: 0; }
         .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; }
@@ -58,7 +58,7 @@
         .btn-checkout { background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); transition: transform 0.2s; }
         .btn-checkout:active { transform: scale(0.95); }
 
-        /* Modal */
+        /* Checkout Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px 20px 0 0; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -76,6 +76,12 @@
         .btn-whatsapp { background: #25D366; color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; margin-bottom: 12px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-email { background: var(--primary); color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
         
+        /* IMAGE ZOOM MODAL (New) */
+        .img-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
+        .img-modal-content { margin: auto; display: block; width: 90%; max-width: 700px; max-height: 80vh; object-fit: contain; border-radius: 8px; animation: zoom 0.3s; }
+        .img-close { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        @keyframes zoom { from {transform:scale(0)} to {transform:scale(1)} }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -126,6 +132,11 @@
         <button class="btn-whatsapp" onclick="sendWhatsapp()">WhatsApp</button>
         <button class="btn-email" onclick="sendEmail()">Email</button>
     </div>
+</div>
+
+<div id="imgModal" class="img-modal" onclick="closeImg()">
+    <span class="img-close">&times;</span>
+    <img class="img-modal-content" id="expandedImg">
 </div>
 
 <script>
@@ -323,8 +334,7 @@
             const name = currentLang === 'de' ? p.nameDE : p.nameFR;
             const qty = cart[p.id] || 0;
             
-            // --- TEST LOGIC: FIRST ITEM GETS IMAGE ---
-            // If ID is '001F', show a test image. Others use GitHub path (which will fail and hide).
+            // TEST IMAGE LOGIC: Only the first product has a test image
             let imgUrl = `https://niksampack.github.io/images/${p.id}.jpg`;
             if (p.id === '001F') {
                 imgUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/83/French_Fries.JPG';
@@ -338,7 +348,7 @@
 
             const html = `
             <div class="product-card ${qty > 0 ? 'in-cart' : ''}" data-cat="${p.cat}" data-name="${name}" data-id="${p.id}" id="card-${p.id}">
-                <img src="${imgUrl}" class="prod-img" onerror="this.style.display='none'" onload="this.style.display='block'">
+                <img src="${imgUrl}" class="prod-img" onclick="openImg('${imgUrl}')" onerror="this.style.display='none'" onload="this.style.display='block'">
                 
                 <div class="prod-info">
                     <div class="prod-name">${name}</div>
@@ -395,6 +405,15 @@
 
     function openCheckout() { renderCartSummary(); document.getElementById('checkoutModal').style.display = 'flex'; }
     function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
+    
+    // IMAGE ZOOM FUNCTIONS
+    function openImg(src) {
+        document.getElementById("expandedImg").src = src;
+        document.getElementById("imgModal").style.display = "block";
+    }
+    function closeImg() {
+        document.getElementById("imgModal").style.display = "none";
+    }
 
     function renderCartSummary() {
         const div = document.getElementById('order-summary');
@@ -426,7 +445,6 @@
             const p = products.find(x => x.id === id);
             const pName = currentLang === 'de' ? p.nameDE : p.nameFR;
             
-            // Resolve Unit
             let unitLabel = p.unit;
             if (unitMap[p.unit]) unitLabel = unitMap[p.unit][currentLang];
             
