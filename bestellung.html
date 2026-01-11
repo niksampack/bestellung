@@ -29,15 +29,15 @@
         .product-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid transparent; transition: border 0.2s; }
         .product-card.in-cart { border-color: var(--accent); background: #fdfdfd; }
         
+        /* IMAGE STYLE */
+        .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 15px; background: #eee; flex-shrink: 0; display: none; /* Hidden by default until loaded */ }
+        
         .prod-info { flex: 1; min-width: 0; }
         .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; }
         
         .prod-detail { font-size: 0.85rem; color: #888; display: flex; align-items: center; gap: 8px; }
         .prod-code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #555; }
-        
-        /* Unit Style (Blue) */
         .prod-unit { color: var(--unit-color); font-weight: 900; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        
         .prod-price { color: var(--accent); font-weight: 800; font-size: 1.1rem; margin-top: 6px; }
 
         /* Controls */
@@ -45,11 +45,10 @@
         .btn-qty { width: 36px; height: 36px; border: none; background: white; border-radius: 10px; font-size: 20px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); touch-action: manipulation; }
         .btn-qty:active { transform: scale(0.95); background: #eee; }
         
-        /* QUANTITY INPUT STYLE (Blue) */
         .qty-input { width: 40px; height: 36px; border: none; background: transparent; text-align: center; font-weight: 900; font-size: 1.2rem; color: var(--unit-color); -moz-appearance: textfield; padding: 0; }
         .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .qty-input:focus { outline: none; background: #e9ecef; border-radius: 6px; }
-        .qty-input::placeholder { color: #ccc; font-weight: normal; } /* Placeholder remains grey */
+        .qty-input::placeholder { color: #ccc; font-weight: normal; }
 
         /* Cart Bar */
         .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 200; backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
@@ -323,8 +322,14 @@
         products.forEach(p => {
             const name = currentLang === 'de' ? p.nameDE : p.nameFR;
             const qty = cart[p.id] || 0;
-            const imgPath = `https://niksampack.github.io/images/${p.id}.jpg`;
             
+            // --- TEST LOGIC: FIRST ITEM GETS IMAGE ---
+            // If ID is '001F', show a test image. Others use GitHub path (which will fail and hide).
+            let imgUrl = `https://niksampack.github.io/images/${p.id}.jpg`;
+            if (p.id === '001F') {
+                imgUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/83/French_Fries.JPG';
+            }
+
             // Resolve Unit
             let unitLabel = p.unit;
             if (unitMap[p.unit]) {
@@ -333,6 +338,8 @@
 
             const html = `
             <div class="product-card ${qty > 0 ? 'in-cart' : ''}" data-cat="${p.cat}" data-name="${name}" data-id="${p.id}" id="card-${p.id}">
+                <img src="${imgUrl}" class="prod-img" onerror="this.style.display='none'" onload="this.style.display='block'">
+                
                 <div class="prod-info">
                     <div class="prod-name">${name}</div>
                     <div class="prod-detail">
