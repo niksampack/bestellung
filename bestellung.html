@@ -1,565 +1,263 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Order Form</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamPack Online Order</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text); }
+        
+        /* Header */
+        .header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: bold; font-size: 1.2rem; color: var(--primary); }
+        .lang-switch button { padding: 5px 10px; border: 1px solid var(--primary); background: white; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .lang-switch button.active { background: var(--primary); color: white; }
 
-  <link rel="stylesheet" href="styles.css" />
+        /* Products */
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .category-title { margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 5px; color: var(--primary); font-weight: bold; }
+        
+        .product-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .prod-info { flex: 1; }
+        .prod-name { font-weight: bold; font-size: 1rem; margin-bottom: 4px; }
+        .prod-detail { font-size: 0.85rem; color: #777; }
+        .prod-price { color: var(--accent); font-weight: bold; margin-top: 5px; }
 
-  <!-- PDF generator -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+        .controls { display: flex; align-items: center; gap: 10px; background: #f1f3f5; padding: 5px; border-radius: 8px; }
+        .btn-qty { width: 30px; height: 30px; border: none; background: white; border-radius: 50%; font-size: 18px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .qty-val { font-weight: bold; min-width: 20px; text-align: center; }
+
+        /* Cart Bar */
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 200; }
+        .cart-total { font-weight: bold; font-size: 1.1rem; }
+        .btn-checkout { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 15px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .order-summary { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+
+        .btn-whatsapp { background: #25D366; color: white; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 1rem; }
+        .btn-email { background: var(--primary); color: white; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    </style>
 </head>
-
 <body>
-  <div class="container">
-    <header class="header">
-      <div>
-        <h1 id="title">Bestellformular</h1>
-        <p id="subtitle">Wählen Sie Produkte aus und senden Sie Ihre Bestellung.</p>
-      </div>
 
-      <div class="lang">
-        <button class="btn secondary" id="btnDE" type="button">DE</button>
-        <button class="btn secondary" id="btnFR" type="button">FR</button>
-      </div>
-    </header>
+<div class="header">
+    <div class="logo">📦 SamPack Order</div>
+    <div class="lang-switch">
+        <button id="btn-de" class="active" onclick="setLang('de')">DE</button>
+        <button id="btn-fr" onclick="setLang('fr')">FR</button>
+    </div>
+</div>
 
-    <main class="card">
-      <form id="orderForm" novalidate>
-        <!-- Honeypot (anti-spam) -->
-        <input type="text" name="website" id="website" autocomplete="off" tabindex="-1" class="hp" aria-hidden="true">
+<div class="container" id="product-list"></div>
 
-        <!-- Customer -->
-        <section class="section">
-          <h2 id="secCustomer">Kundendaten</h2>
+<div class="cart-bar">
+    <div class="cart-total">
+        <span id="total-price">0.00</span> CHF
+        <div style="font-size: 0.8rem; color: #777;" id="item-count">0 Artikel</div>
+    </div>
+    <button class="btn-checkout" onclick="openCheckout()" id="lbl-view-cart">Warenkorb</button>
+</div>
 
-          <div class="grid">
-            <label>
-              <span id="lblName">Name *</span>
-              <input id="customerName" name="customerName" autocomplete="name" required />
-            </label>
+<div class="modal" id="checkoutModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeCheckout()">&times;</span>
+        <h2 id="lbl-checkout-title" style="margin-top:0">Bestellung abschließen</h2>
+        
+        <div class="order-summary" id="order-summary"></div>
 
-            <label>
-              <span id="lblEmail">E-Mail (optional)</span>
-              <input id="customerEmail" name="customerEmail" type="email" autocomplete="email" />
-            </label>
+        <div class="form-group">
+            <label id="lbl-name">Firmenname / Ihr Name</label>
+            <input type="text" id="customerName" placeholder="...">
+        </div>
+        <div class="form-group">
+            <label id="lbl-address">Adresse</label>
+            <input type="text" id="customerAddress" placeholder="...">
+        </div>
+        <div class="form-group">
+            <label id="lbl-date">Lieferdatum</label>
+            <input type="date" id="deliveryDate">
+        </div>
 
-            <label class="full">
-              <span id="lblCompany">Firma / Restaurant *</span>
-              <input id="customerCompany" name="customerCompany" autocomplete="organization" required />
-            </label>
+        <button class="btn-whatsapp" onclick="sendWhatsapp()">📱 WhatsApp</button>
+        <button class="btn-email" onclick="sendEmail()">📧 Email</button>
+    </div>
+</div>
 
-            <label class="full">
-              <span id="lblNotes">Notizen (optional)</span>
-              <textarea id="notes" name="notes" rows="3"></textarea>
-            </label>
-          </div>
-        </section>
+<script>
+    // --- تنظیمات محصولات ---
+    const products = [
+        { id: "2070", cat: "packaging", nameDE: "Aluminiumfolie 14mm (4 Stk.)", nameFR: "Papier aluminium 14mm (4 pcs)", price: 25.00, unit: "Packung" },
+        { id: "2032A", cat: "packaging", nameDE: "Frischhaltefolie 45cm", nameFR: "Film alimentaire 45cm", price: 45.00, unit: "Stk." },
+        { id: "sauce", cat: "packaging", nameDE: "Saucenschalen 50ml (1000 Stk.)", nameFR: "Pots à sauce 50ml (1000 pcs)", price: 45.00, unit: "Packung" },
+        { id: "16750", cat: "packaging", nameDE: "Lunch-Box IP 9 Weiss", nameFR: "Boîte repas IP 9 Blanc", price: 38.00, unit: "Packung" },
+        { id: "bags", cat: "packaging", nameDE: "Bestecktaschen Creme", nameFR: "Pochettes couverts Crème", price: 60.00, unit: "Packung" },
+        { id: "002", cat: "food", nameDE: "Pommes Frites Fine Quality (7mm)", nameFR: "Pommes Frites (7mm)", price: 3.50, unit: "kg" },
+        { id: "009", cat: "food", nameDE: "Hähnchenbrust (12kg Box)", nameFR: "Poitrine de poulet (Box 12kg)", price: 94.00, unit: "Box" }
+    ];
 
-        <!-- Products -->
-        <section class="section">
-          <div class="sectionHead">
-            <h2 id="secProducts">Produkte</h2>
-            <input id="search" type="search" placeholder="Suchen…" />
-          </div>
+    const translations = {
+        de: { cat_packaging: "Verpackung", cat_food: "Lebensmittel", view_cart: "Bestellen >", checkout_title: "Bestellung prüfen", name: "Firmenname / Kontakt", address: "Lieferadresse", date: "Gewünschtes Datum", items: "Artikel", whatsapp_msg: "Hallo, hier ist eine neue Bestellung:", email_sent: "Bestellung erfolgreich gesendet!", fill_all: "Bitte Namen eingeben!" },
+        fr: { cat_packaging: "Emballage", cat_food: "Alimentation", view_cart: "Commander >", checkout_title: "Vérifier la commande", name: "Nom de l'entreprise / Contact", address: "Adresse de livraison", date: "Date souhaitée", items: "Articles", whatsapp_msg: "Bonjour, voici une nouvelle commande :", email_sent: "Commande envoyée avec succès !", fill_all: "Veuillez entrer votre nom !" }
+    };
 
-          <div class="hint" id="qtyHint">Menge: 0 = nicht ausgewählt</div>
-          <div id="products" class="products"></div>
-        </section>
+    let cart = {};
+    let currentLang = 'de';
 
-        <!-- Summary -->
-        <section class="section">
-          <h2 id="secSummary">Zusammenfassung</h2>
-          <pre id="summary" class="summary muted">—</pre>
-        </section>
+    function init() { renderProducts(); document.getElementById('deliveryDate').valueAsDate = new Date(); }
 
-        <!-- Actions -->
-        <section class="actions">
-          <button class="btn secondary" type="button" id="btnDownloadPdf">
-            PDF herunterladen
-          </button>
+    function setLang(lang) {
+        currentLang = lang;
+        document.getElementById('btn-de').className = lang === 'de' ? 'active' : '';
+        document.getElementById('btn-fr').className = lang === 'fr' ? 'active' : '';
+        document.getElementById('lbl-view-cart').innerText = translations[lang].view_cart;
+        document.getElementById('lbl-checkout-title').innerText = translations[lang].checkout_title;
+        document.getElementById('lbl-name').innerText = translations[lang].name;
+        document.getElementById('lbl-address').innerText = translations[lang].address;
+        document.getElementById('lbl-date').innerText = translations[lang].date;
+        renderProducts();
+        if(document.getElementById('checkoutModal').style.display === 'flex') renderCartSummary();
+    }
 
-          <button class="btn primary" type="submit" id="btnSubmit">
-            Bestellung senden (E-Mail)
-          </button>
-        </section>
+    function renderProducts() {
+        const container = document.getElementById('product-list');
+        container.innerHTML = "";
+        const cats = { packaging: [], food: [] };
+        products.forEach(p => cats[p.cat].push(p));
+        const t = translations[currentLang];
 
-        <p id="status" class="status" aria-live="polite"></p>
-      </form>
-    </main>
+        const createSection = (key, title) => {
+            if (cats[key].length === 0) return;
+            container.innerHTML += `<div class="category-title">${title}</div>`;
+            cats[key].forEach(p => {
+                const qty = cart[p.id] || 0;
+                const name = currentLang === 'de' ? p.nameDE : p.nameFR;
+                container.innerHTML += `
+                <div class="product-card">
+                    <div class="prod-info">
+                        <div class="prod-name">${name}</div>
+                        <div class="prod-detail">${p.unit} - Code: ${p.id}</div>
+                        <div class="prod-price">${p.price.toFixed(2)} CHF</div>
+                    </div>
+                    <div class="controls">
+                        <button class="btn-qty" onclick="updateCart('${p.id}', -1)">-</button>
+                        <div class="qty-val">${qty}</div>
+                        <button class="btn-qty" onclick="updateCart('${p.id}', 1)">+</button>
+                    </div>
+                </div>`;
+            });
+        };
+        createSection('packaging', t.cat_packaging);
+        createSection('food', t.cat_food);
+    }
 
-    <footer class="footer muted">
-      <span>Powered by Web3Forms</span>
-    </footer>
-  </div>
+    function updateCart(id, change) {
+        if (!cart[id]) cart[id] = 0;
+        cart[id] += change;
+        if (cart[id] <= 0) delete cart[id];
+        renderProducts();
+        updateCartBar();
+    }
 
-  <script src="app.js"></script>
+    function updateCartBar() {
+        let total = 0; let count = 0;
+        for (const [id, qty] of Object.entries(cart)) {
+            const p = products.find(x => x.id === id);
+            if(p) { total += p.price * qty; count += qty; }
+        }
+        document.getElementById('total-price').innerText = total.toFixed(2);
+        document.getElementById('item-count').innerText = `${count} ${translations[currentLang].items}`;
+    }
+
+    function openCheckout() {
+        if (Object.keys(cart).length === 0) return;
+        renderCartSummary();
+        document.getElementById('checkoutModal').style.display = 'flex';
+    }
+    function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+    function renderCartSummary() {
+        const div = document.getElementById('order-summary');
+        div.innerHTML = "";
+        let total = 0;
+        for (const [id, qty] of Object.entries(cart)) {
+            const p = products.find(x => x.id === id);
+            const name = currentLang === 'de' ? p.nameDE : p.nameFR;
+            const lineTotal = p.price * qty;
+            total += lineTotal;
+            div.innerHTML += `<div class="summary-row"><span>${qty}x ${name}</span><span>${lineTotal.toFixed(2)}</span></div>`;
+        }
+        div.innerHTML += `<div style="text-align:right; font-weight:bold; margin-top:10px; border-top:1px solid #ddd; padding-top:5px;">Total: ${total.toFixed(2)} CHF</div>`;
+    }
+
+    function getOrderText() {
+        const name = document.getElementById('customerName').value;
+        const address = document.getElementById('customerAddress').value;
+        const date = document.getElementById('deliveryDate').value;
+        const t = translations[currentLang];
+        
+        let text = `*${t.whatsapp_msg}*\n\n`;
+        text += `👤: ${name}\n📍: ${address}\n📅: ${date}\n\n`;
+        let total = 0;
+        for (const [id, qty] of Object.entries(cart)) {
+            const p = products.find(x => x.id === id);
+            const pName = currentLang === 'de' ? p.nameDE : p.nameFR;
+            text += `${qty}x ${pName} \n`;
+            total += p.price * qty;
+        }
+        text += `----------------\n*Total: ${total.toFixed(2)} CHF*`;
+        return text;
+    }
+
+    function sendWhatsapp() {
+        const name = document.getElementById('customerName').value;
+        if (!name) return alert(translations[currentLang].fill_all);
+        
+        // شماره موبایل شما ثبت شد
+        const myNumber = "41783249525"; 
+        
+        const text = encodeURIComponent(getOrderText());
+        window.open(`https://wa.me/${myNumber}?text=${text}`, '_blank');
+    }
+
+    async function sendEmail() {
+        const name = document.getElementById('customerName').value;
+        if (!name) return alert(translations[currentLang].fill_all);
+        const btn = document.querySelector('.btn-email');
+        const oldText = btn.innerText;
+        btn.disabled = true; btn.innerText = "...";
+
+        try {
+            const formData = new FormData();
+            
+            // *** توجه: کلید جدید را اینجا وارد کن ***
+            formData.append("access_key", "YOUR_NEW_ACCESS_KEY_HERE"); 
+
+            formData.append("subject", `New Order: ${name}`);
+            formData.append("message", getOrderText());
+            const res = await fetch("https://api.web3forms.com/submit", { method: "POST", body: formData });
+            if (res.ok) {
+                alert(translations[currentLang].email_sent);
+                closeCheckout();
+                cart = {};
+                renderProducts();
+                updateCartBar();
+            } else { alert("Error sending email."); }
+        } catch (e) { alert("Connection error."); }
+        btn.disabled = false; btn.innerText = oldText;
+    }
+
+    init();
+</script>
 </body>
 </html>
-:root { --bg:#0b0d10; --card:#12151b; --text:#e9eef5; --muted:#a9b3c3; --line:#243041; }
-* { box-sizing:border-box; }
-body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
-.container { max-width: 980px; margin: 24px auto; padding: 0 16px; }
-.header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; }
-.section { padding: 10px 0 18px; border-bottom:1px solid var(--line); }
-.section:last-of-type { border-bottom:0; }
-.sectionHead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-h1 { margin:0 0 6px; font-size: 22px; }
-h2 { margin: 0 0 12px; font-size: 16px; }
-p { margin:0; }
-.muted { color: var(--muted); }
-
-.grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-.grid .full { grid-column: 1 / -1; }
-label span { display:block; font-size: 12px; color: var(--muted); margin-bottom:6px; }
-input, textarea {
-  width:100%; padding:10px 12px; border-radius:10px;
-  border:1px solid var(--line); background:#0f1217; color:var(--text);
-}
-input[type="search"] { max-width: 260px; }
-
-.products { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
-.product {
-  border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0f1217;
-  display:flex; flex-direction:column;
-}
-.product img { width:100%; height:130px; object-fit:cover; display:block; }
-.productBody { padding:10px; display:flex; flex-direction:column; gap:8px; }
-.productTitle { font-weight:600; font-size: 14px; }
-.productMeta { font-size: 12px; color: var(--muted); }
-
-.productPick { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.qtyWrap { display:flex; align-items:center; gap:8px; }
-.qtyLabel { font-size: 12px; color: var(--muted); }
-.qtyInput { width: 96px; }
-
-.actions { display:flex; gap:12px; padding-top:14px; }
-.btn {
-  border:1px solid var(--line); border-radius:12px; padding:10px 14px; cursor:pointer;
-  background:#0f1217; color:var(--text); font-weight:600;
-}
-.btn.primary { background:#1f6feb; border-color:#1f6feb; }
-.btn.secondary { background:transparent; }
-.btn:disabled { opacity: 0.6; cursor:not-allowed; }
-
-.status { margin-top: 10px; min-height: 20px; }
-.footer { margin-top: 14px; font-size: 12px; }
-
-.summary { white-space: pre-wrap; margin: 0; padding: 10px 12px; border:1px solid var(--line); border-radius:12px; background:#0f1217; }
-.hint { font-size: 12px; color: var(--muted); margin: -6px 0 12px; }
-
-.hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
-
-@media (max-width: 860px){
-  .products { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 560px){
-  .grid { grid-template-columns: 1fr; }
-  .products { grid-template-columns: 1fr; }
-}
-[
-  {
-    "id": "P001",
-    "name_de": "Tomaten (1kg)",
-    "name_fr": "Tomates (1kg)",
-    "desc_de": "Frisch",
-    "desc_fr": "Frais",
-    "image": "https://images.unsplash.com/photo-1546470427-e26264be0b3a?auto=format&fit=crop&w=1200&q=60"
-  },
-  {
-    "id": "P002",
-    "name_de": "Olivenöl (500ml)",
-    "name_fr": "Huile d’olive (500ml)",
-    "desc_de": "Extra nativ",
-    "desc_fr": "Extra vierge",
-    "image": "https://images.unsplash.com/photo-1615484478161-5f1c0fe58f3c?auto=format&fit=crop&w=1200&q=60"
-  },
-  {
-    "id": "P003",
-    "name_de": "Mozzarella",
-    "name_fr": "Mozzarella",
-    "desc_de": "Kühlware",
-    "desc_fr": "Produit frais",
-    "image": "https://images.unsplash.com/photo-1604909052583-c227e6bbf3f2?auto=format&fit=crop&w=1200&q=60"
-  }
-]
-const WEB3FORMS_ACCESS_KEY = "01c92836-701d-4faf-91b9-3836ee825485";
-const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
-
-const state = {
-  lang: "de",
-  products: [],
-  qty: new Map() // productId -> integer
-};
-
-const i18n = {
-  de: {
-    title: "Bestellformular",
-    subtitle: "Wählen Sie Produkte aus und senden Sie Ihre Bestellung.",
-    secCustomer: "Kundendaten",
-    lblName: "Name *",
-    lblEmail: "E-Mail (optional)",
-    lblCompany: "Firma / Restaurant *",
-    lblNotes: "Notizen (optional)",
-    secProducts: "Produkte",
-    searchPh: "Suchen…",
-    qtyHint: "Menge: 0 = nicht ausgewählt",
-    qtyWord: "Menge",
-    secSummary: "Zusammenfassung",
-    btnPdf: "PDF herunterladen",
-    btnSend: "Bestellung senden (E-Mail)",
-    emptySummary: "Keine Produkte ausgewählt.",
-    sending: "Senden…",
-    sent: "Gesendet! Vielen Dank.",
-    errSelect: "Bitte wählen Sie mindestens ein Produkt (Menge > 0).",
-    errKey: "Web3Forms access key fehlt.",
-    errRequired: "Bitte füllen Sie die Pflichtfelder aus.",
-    errHoneypot: "Spam detected."
-  },
-  fr: {
-    title: "Formulaire de commande",
-    subtitle: "Sélectionnez des produits et envoyez votre commande.",
-    secCustomer: "Données client",
-    lblName: "Nom *",
-    lblEmail: "E-mail (optionnel)",
-    lblCompany: "Société / Restaurant *",
-    lblNotes: "Notes (optionnel)",
-    secProducts: "Produits",
-    searchPh: "Rechercher…",
-    qtyHint: "Quantité : 0 = non sélectionné",
-    qtyWord: "Qté",
-    secSummary: "Récapitulatif",
-    btnPdf: "Télécharger le PDF",
-    btnSend: "Envoyer la commande (E-mail)",
-    emptySummary: "Aucun produit sélectionné.",
-    sending: "Envoi…",
-    sent: "Envoyé ! Merci.",
-    errSelect: "Veuillez sélectionner au moins un produit (quantité > 0).",
-    errKey: "Clé Web3Forms manquante.",
-    errRequired: "Veuillez remplir les champs obligatoires.",
-    errHoneypot: "Spam détecté."
-  }
-};
-
-const $ = (id) => document.getElementById(id);
-
-function setStatus(msg, isError = false) {
-  const el = $("status");
-  el.textContent = msg;
-  el.style.color = isError ? "#ff7b72" : "";
-}
-
-function productLabel(p) {
-  return state.lang === "de" ? p.name_de : p.name_fr;
-}
-function productDesc(p) {
-  return state.lang === "de" ? p.desc_de : p.desc_fr;
-}
-
-function setLang(lang) {
-  state.lang = lang;
-  document.documentElement.lang = lang;
-
-  const t = i18n[lang];
-  $("title").textContent = t.title;
-  $("subtitle").textContent = t.subtitle;
-  $("secCustomer").textContent = t.secCustomer;
-  $("lblName").textContent = t.lblName;
-  $("lblEmail").textContent = t.lblEmail;
-  $("lblCompany").textContent = t.lblCompany;
-  $("lblNotes").textContent = t.lblNotes;
-  $("secProducts").textContent = t.secProducts;
-  $("search").placeholder = t.searchPh;
-  $("qtyHint").textContent = t.qtyHint;
-  $("secSummary").textContent = t.secSummary;
-  $("btnDownloadPdf").textContent = t.btnPdf;
-  $("btnSubmit").textContent = t.btnSend;
-
-  renderProducts($("search").value || "");
-  renderSummary();
-}
-
-function getSelectedItems() {
-  const items = [];
-  for (const p of state.products) {
-    const q = Number(state.qty.get(p.id) || 0);
-    if (q > 0) items.push({ product: p, qty: q });
-  }
-  return items;
-}
-
-function renderProducts(filterText) {
-  const host = $("products");
-  host.innerHTML = "";
-
-  const query = (filterText || "").toLowerCase().trim();
-
-  const list = state.products.filter(p => {
-    const name = (p.name_de + " " + p.name_fr).toLowerCase();
-    const desc = (p.desc_de + " " + p.desc_fr).toLowerCase();
-    return !query || name.includes(query) || desc.includes(query) || String(p.id).toLowerCase().includes(query);
-  });
-
-  const t = i18n[state.lang];
-
-  for (const p of list) {
-    const card = document.createElement("div");
-    card.className = "product";
-
-    const img = document.createElement("img");
-    img.src = p.image;
-    img.alt = productLabel(p);
-    img.loading = "lazy";
-
-    const body = document.createElement("div");
-    body.className = "productBody";
-
-    const title = document.createElement("div");
-    title.className = "productTitle";
-    title.textContent = productLabel(p);
-
-    const meta = document.createElement("div");
-    meta.className = "productMeta";
-    meta.textContent = `${p.id} • ${productDesc(p)}`;
-
-    const pick = document.createElement("div");
-    pick.className = "productPick";
-
-    const qtyWrap = document.createElement("div");
-    qtyWrap.className = "qtyWrap";
-
-    const qtyLabel = document.createElement("span");
-    qtyLabel.className = "qtyLabel";
-    qtyLabel.textContent = t.qtyWord;
-
-    const qtyInput = document.createElement("input");
-    qtyInput.className = "qtyInput";
-    qtyInput.type = "number";
-    qtyInput.min = "0";
-    qtyInput.max = "999";
-    qtyInput.step = "1";
-    qtyInput.inputMode = "numeric";
-    qtyInput.pattern = "[0-9]*";
-    qtyInput.value = String(state.qty.get(p.id) || 0);
-
-    qtyInput.addEventListener("input", () => {
-      let val = Number(qtyInput.value);
-      if (!Number.isFinite(val) || val < 0) val = 0;
-      val = Math.floor(val);
-      if (val > 999) val = 999;
-      qtyInput.value = String(val);
-      state.qty.set(p.id, val);
-      renderSummary();
-      setStatus("");
-    });
-
-    qtyWrap.appendChild(qtyLabel);
-    qtyWrap.appendChild(qtyInput);
-
-    pick.appendChild(document.createElement("span"));
-    pick.appendChild(qtyWrap);
-
-    body.appendChild(title);
-    body.appendChild(meta);
-    body.appendChild(pick);
-
-    card.appendChild(img);
-    card.appendChild(body);
-
-    host.appendChild(card);
-  }
-}
-
-function renderSummary() {
-  const t = i18n[state.lang];
-  const box = $("summary");
-  const selected = getSelectedItems();
-
-  if (!selected.length) {
-    box.textContent = t.emptySummary;
-    $("btnSubmit").disabled = true;
-    $("btnDownloadPdf").disabled = true;
-    return;
-  }
-
-  const lines = selected.map(({ product, qty }) => `• ${productLabel(product)} (${product.id}) × ${qty}`);
-  box.textContent = lines.join("\n");
-
-  $("btnSubmit").disabled = false;
-  $("btnDownloadPdf").disabled = false;
-}
-
-function buildOrderText() {
-  const selected = getSelectedItems();
-
-  const name = $("customerName").value.trim();
-  const email = $("customerEmail").value.trim();
-  const company = $("customerCompany").value.trim();
-  const notes = $("notes").value.trim();
-
-  const lines = [];
-  lines.push(`Language: ${state.lang.toUpperCase()}`);
-  lines.push(`Name: ${name}`);
-  if (email) lines.push(`Email: ${email}`);
-  lines.push(`Company: ${company}`);
-  if (notes) lines.push(`Notes: ${notes}`);
-  lines.push("");
-  lines.push("Items:");
-  for (const { product, qty } of selected) {
-    lines.push(`- ${productLabel(product)} (${product.id}) x ${qty}`);
-  }
-  return lines.join("\n");
-}
-
-async function generatePdfBlob() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-
-  const title = state.lang === "de" ? "Bestellung" : "Commande";
-  doc.setFontSize(14);
-  doc.text(title, 40, 50);
-
-  doc.setFontSize(10);
-  const text = buildOrderText();
-  const lines = doc.splitTextToSize(text, 515);
-  doc.text(lines, 40, 80);
-
-  return doc.output("blob");
-}
-
-function validateRequiredFields() {
-  const nameOk = $("customerName").value.trim().length > 0;
-  const companyOk = $("customerCompany").value.trim().length > 0;
-
-  // Email is optional
-  const email = $("customerEmail").value.trim();
-  const emailOk = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  return nameOk && companyOk && emailOk;
-}
-
-async function downloadPdf() {
-  const selected = getSelectedItems();
-  if (!selected.length) {
-    setStatus(i18n[state.lang].errSelect, true);
-    return;
-  }
-
-  if (!validateRequiredFields()) {
-    setStatus(i18n[state.lang].errRequired, true);
-    return;
-  }
-
-  const blob = await generatePdfBlob();
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `order_${Date.now()}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  URL.revokeObjectURL(url);
-  setStatus("");
-}
-
-async function submitToWeb3Forms() {
-  const t = i18n[state.lang];
-
-  if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY.includes("PUT_")) {
-    setStatus(t.errKey, true);
-    return;
-  }
-
-  // Honeypot check
-  if (($("website").value || "").trim().length > 0) {
-    setStatus(t.errHoneypot, true);
-    return;
-  }
-
-  const selected = getSelectedItems();
-  if (!selected.length) {
-    setStatus(t.errSelect, true);
-    return;
-  }
-
-  if (!validateRequiredFields()) {
-    setStatus(t.errRequired, true);
-    return;
-  }
-
-  setStatus(t.sending);
-
-  const pdfBlob = await generatePdfBlob();
-  const pdfFile = new File([pdfBlob], `order_${Date.now()}.pdf`, { type: "application/pdf" });
-
-  const name = $("customerName").value.trim();
-  const email = $("customerEmail").value.trim();
-  const company = $("customerCompany").value.trim();
-  const notes = $("notes").value.trim();
-
-  const fd = new FormData();
-  fd.append("access_key", WEB3FORMS_ACCESS_KEY);
-
-  // Email metadata
-  fd.append("subject", state.lang === "de" ? "Neue Bestellung" : "Nouvelle commande");
-  fd.append("from_name", name || "Customer");
-
-  // If provided, use as reply-to/email field for convenience
-  if (email) fd.append("email", email);
-
-  fd.append("customerCompany", company);
-  if (notes) fd.append("notes", notes);
-
-  // Main message
-  fd.append("message", buildOrderText());
-
-  // Attach PDF
-  fd.append("attachment", pdfFile);
-
-  const res = await fetch(WEB3FORMS_ENDPOINT, { method: "POST", body: fd });
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok || data.success === false) {
-    setStatus(`Error: ${data.message || res.statusText}`, true);
-    return;
-  }
-
-  setStatus(t.sent);
-}
-
-async function init() {
-  // Load products
-  const r = await fetch("products.json", { cache: "no-store" });
-  state.products = await r.json();
-
-  // Events
-  $("btnDE").addEventListener("click", () => setLang("de"));
-  $("btnFR").addEventListener("click", () => setLang("fr"));
-
-  $("search").addEventListener("input", (e) => renderProducts(e.target.value || ""));
-
-  $("btnDownloadPdf").addEventListener("click", downloadPdf);
-
-  // Re-validate on typing
-  ["customerName", "customerEmail", "customerCompany", "notes"].forEach(id => {
-    $(id).addEventListener("input", () => setStatus(""));
-  });
-
-  $("orderForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    try {
-      await submitToWeb3Forms();
-    } catch (err) {
-      setStatus(`Error: ${String(err)}`, true);
-    }
-  });
-
-  setLang("de");
-  renderSummary();
-}
-
-init();
