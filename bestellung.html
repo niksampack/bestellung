@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Form</title>
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- PDF generator -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 id="title">Bestellformular</h1>
+        <p id="subtitle">Wählen Sie Produkte aus und senden Sie Ihre Bestellung.</p>
+      </div>
+
+      <div class="lang">
+        <button class="btn secondary" id="btnDE" type="button">DE</button>
+        <button class="btn secondary" id="btnFR" type="button">FR</button>
+      </div>
+    </header>
+
+    <main class="card">
+      <form id="orderForm" novalidate>
+        <!-- Honeypot (anti-spam) -->
+        <input type="text" name="website" id="website" autocomplete="off" tabindex="-1" class="hp" aria-hidden="true">
+
+        <!-- Customer -->
+        <section class="section">
+          <h2 id="secCustomer">Kundendaten</h2>
+
+          <div class="grid">
+            <label>
+              <span id="lblName">Name *</span>
+              <input id="customerName" name="customerName" autocomplete="name" required />
+            </label>
+
+            <label>
+              <span id="lblEmail">E-Mail (optional)</span>
+              <input id="customerEmail" name="customerEmail" type="email" autocomplete="email" />
+            </label>
+
+            <label class="full">
+              <span id="lblCompany">Firma / Restaurant *</span>
+              <input id="customerCompany" name="customerCompany" autocomplete="organization" required />
+            </label>
+
+            <label class="full">
+              <span id="lblNotes">Notizen (optional)</span>
+              <textarea id="notes" name="notes" rows="3"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <!-- Products -->
+        <section class="section">
+          <div class="sectionHead">
+            <h2 id="secProducts">Produkte</h2>
+            <input id="search" type="search" placeholder="Suchen…" />
+          </div>
+
+          <div class="hint" id="qtyHint">Menge: 0 = nicht ausgewählt</div>
+          <div id="products" class="products"></div>
+        </section>
+
+        <!-- Summary -->
+        <section class="section">
+          <h2 id="secSummary">Zusammenfassung</h2>
+          <pre id="summary" class="summary muted">—</pre>
+        </section>
+
+        <!-- Actions -->
+        <section class="actions">
+          <button class="btn secondary" type="button" id="btnDownloadPdf">
+            PDF herunterladen
+          </button>
+
+          <button class="btn primary" type="submit" id="btnSubmit">
+            Bestellung senden (E-Mail)
+          </button>
+        </section>
+
+        <p id="status" class="status" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <footer class="footer muted">
+      <span>Powered by Web3Forms</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+:root { --bg:#0b0d10; --card:#12151b; --text:#e9eef5; --muted:#a9b3c3; --line:#243041; }
+* { box-sizing:border-box; }
+body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+.container { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+.header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; }
+.section { padding: 10px 0 18px; border-bottom:1px solid var(--line); }
+.section:last-of-type { border-bottom:0; }
+.sectionHead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+h1 { margin:0 0 6px; font-size: 22px; }
+h2 { margin: 0 0 12px; font-size: 16px; }
+p { margin:0; }
+.muted { color: var(--muted); }
+
+.grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.grid .full { grid-column: 1 / -1; }
+label span { display:block; font-size: 12px; color: var(--muted); margin-bottom:6px; }
+input, textarea {
+  width:100%; padding:10px 12px; border-radius:10px;
+  border:1px solid var(--line); background:#0f1217; color:var(--text);
+}
+input[type="search"] { max-width: 260px; }
+
+.products { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
+.product {
+  border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0f1217;
+  display:flex; flex-direction:column;
+}
+.product img { width:100%; height:130px; object-fit:cover; display:block; }
+.productBody { padding:10px; display:flex; flex-direction:column; gap:8px; }
+.productTitle { font-weight:600; font-size: 14px; }
+.productMeta { font-size: 12px; color: var(--muted); }
+
+.productPick { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.qtyWrap { display:flex; align-items:center; gap:8px; }
+.qtyLabel { font-size: 12px; color: var(--muted); }
+.qtyInput { width: 96px; }
+
+.actions { display:flex; gap:12px; padding-top:14px; }
+.btn {
+  border:1px solid var(--line); border-radius:12px; padding:10px 14px; cursor:pointer;
+  background:#0f1217; color:var(--text); font-weight:600;
+}
+.btn.primary { background:#1f6feb; border-color:#1f6feb; }
+.btn.secondary { background:transparent; }
+.btn:disabled { opacity: 0.6; cursor:not-allowed; }
+
+.status { margin-top: 10px; min-height: 20px; }
+.footer { margin-top: 14px; font-size: 12px; }
+
+.summary { white-space: pre-wrap; margin: 0; padding: 10px 12px; border:1px solid var(--line); border-radius:12px; background:#0f1217; }
+.hint { font-size: 12px; color: var(--muted); margin: -6px 0 12px; }
+
+.hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 860px){
+  .products { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px){
+  .grid { grid-template-columns: 1fr; }
+  .products { grid-template-columns: 1fr; }
+}
+[
+  {
+    "id": "P001",
+    "name_de": "Tomaten (1kg)",
+    "name_fr": "Tomates (1kg)",
+    "desc_de": "Frisch",
+    "desc_fr": "Frais",
+    "image": "https://images.unsplash.com/photo-1546470427-e26264be0b3a?auto=format&fit=crop&w=1200&q=60"
+  },
+  {
+    "id": "P002",
+    "name_de": "Olivenöl (500ml)",
+    "name_fr": "Huile d’olive (500ml)",
+    "desc_de": "Extra nativ",
+    "desc_fr": "Extra vierge",
+    "image": "https://images.unsplash.com/photo-1615484478161-5f1c0fe58f3c?auto=format&fit=crop&w=1200&q=60"
+  },
+  {
+    "id": "P003",
+    "name_de": "Mozzarella",
+    "name_fr": "Mozzarella",
+    "desc_de": "Kühlware",
+    "desc_fr": "Produit frais",
+    "image": "https://images.unsplash.com/photo-1604909052583-c227e6bbf3f2?auto=format&fit=crop&w=1200&q=60"
+  }
+]
+const WEB3FORMS_ACCESS_KEY = "01c92836-701d-4faf-91b9-3836ee825485";
+const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
+
+const state = {
+  lang: "de",
+  products: [],
+  qty: new Map() // productId -> integer
+};
+
+const i18n = {
+  de: {
+    title: "Bestellformular",
+    subtitle: "Wählen Sie Produkte aus und senden Sie Ihre Bestellung.",
+    secCustomer: "Kundendaten",
+    lblName: "Name *",
+    lblEmail: "E-Mail (optional)",
+    lblCompany: "Firma / Restaurant *",
+    lblNotes: "Notizen (optional)",
+    secProducts: "Produkte",
+    searchPh: "Suchen…",
+    qtyHint: "Menge: 0 = nicht ausgewählt",
+    qtyWord: "Menge",
+    secSummary: "Zusammenfassung",
+    btnPdf: "PDF herunterladen",
+    btnSend: "Bestellung senden (E-Mail)",
+    emptySummary: "Keine Produkte ausgewählt.",
+    sending: "Senden…",
+    sent: "Gesendet! Vielen Dank.",
+    errSelect: "Bitte wählen Sie mindestens ein Produkt (Menge > 0).",
+    errKey: "Web3Forms access key fehlt.",
+    errRequired: "Bitte füllen Sie die Pflichtfelder aus.",
+    errHoneypot: "Spam detected."
+  },
+  fr: {
+    title: "Formulaire de commande",
+    subtitle: "Sélectionnez des produits et envoyez votre commande.",
+    secCustomer: "Données client",
+    lblName: "Nom *",
+    lblEmail: "E-mail (optionnel)",
+    lblCompany: "Société / Restaurant *",
+    lblNotes: "Notes (optionnel)",
+    secProducts: "Produits",
+    searchPh: "Rechercher…",
+    qtyHint: "Quantité : 0 = non sélectionné",
+    qtyWord: "Qté",
+    secSummary: "Récapitulatif",
+    btnPdf: "Télécharger le PDF",
+    btnSend: "Envoyer la commande (E-mail)",
+    emptySummary: "Aucun produit sélectionné.",
+    sending: "Envoi…",
+    sent: "Envoyé ! Merci.",
+    errSelect: "Veuillez sélectionner au moins un produit (quantité > 0).",
+    errKey: "Clé Web3Forms manquante.",
+    errRequired: "Veuillez remplir les champs obligatoires.",
+    errHoneypot: "Spam détecté."
+  }
+};
+
+const $ = (id) => document.getElementById(id);
+
+function setStatus(msg, isError = false) {
+  const el = $("status");
+  el.textContent = msg;
+  el.style.color = isError ? "#ff7b72" : "";
+}
+
+function productLabel(p) {
+  return state.lang === "de" ? p.name_de : p.name_fr;
+}
+function productDesc(p) {
+  return state.lang === "de" ? p.desc_de : p.desc_fr;
+}
+
+function setLang(lang) {
+  state.lang = lang;
+  document.documentElement.lang = lang;
+
+  const t = i18n[lang];
+  $("title").textContent = t.title;
+  $("subtitle").textContent = t.subtitle;
+  $("secCustomer").textContent = t.secCustomer;
+  $("lblName").textContent = t.lblName;
+  $("lblEmail").textContent = t.lblEmail;
+  $("lblCompany").textContent = t.lblCompany;
+  $("lblNotes").textContent = t.lblNotes;
+  $("secProducts").textContent = t.secProducts;
+  $("search").placeholder = t.searchPh;
+  $("qtyHint").textContent = t.qtyHint;
+  $("secSummary").textContent = t.secSummary;
+  $("btnDownloadPdf").textContent = t.btnPdf;
+  $("btnSubmit").textContent = t.btnSend;
+
+  renderProducts($("search").value || "");
+  renderSummary();
+}
+
+function getSelectedItems() {
+  const items = [];
+  for (const p of state.products) {
+    const q = Number(state.qty.get(p.id) || 0);
+    if (q > 0) items.push({ product: p, qty: q });
+  }
+  return items;
+}
+
+function renderProducts(filterText) {
+  const host = $("products");
+  host.innerHTML = "";
+
+  const query = (filterText || "").toLowerCase().trim();
+
+  const list = state.products.filter(p => {
+    const name = (p.name_de + " " + p.name_fr).toLowerCase();
+    const desc = (p.desc_de + " " + p.desc_fr).toLowerCase();
+    return !query || name.includes(query) || desc.includes(query) || String(p.id).toLowerCase().includes(query);
+  });
+
+  const t = i18n[state.lang];
+
+  for (const p of list) {
+    const card = document.createElement("div");
+    card.className = "product";
+
+    const img = document.createElement("img");
+    img.src = p.image;
+    img.alt = productLabel(p);
+    img.loading = "lazy";
+
+    const body = document.createElement("div");
+    body.className = "productBody";
+
+    const title = document.createElement("div");
+    title.className = "productTitle";
+    title.textContent = productLabel(p);
+
+    const meta = document.createElement("div");
+    meta.className = "productMeta";
+    meta.textContent = `${p.id} • ${productDesc(p)}`;
+
+    const pick = document.createElement("div");
+    pick.className = "productPick";
+
+    const qtyWrap = document.createElement("div");
+    qtyWrap.className = "qtyWrap";
+
+    const qtyLabel = document.createElement("span");
+    qtyLabel.className = "qtyLabel";
+    qtyLabel.textContent = t.qtyWord;
+
+    const qtyInput = document.createElement("input");
+    qtyInput.className = "qtyInput";
+    qtyInput.type = "number";
+    qtyInput.min = "0";
+    qtyInput.max = "999";
+    qtyInput.step = "1";
+    qtyInput.inputMode = "numeric";
+    qtyInput.pattern = "[0-9]*";
+    qtyInput.value = String(state.qty.get(p.id) || 0);
+
+    qtyInput.addEventListener("input", () => {
+      let val = Number(qtyInput.value);
+      if (!Number.isFinite(val) || val < 0) val = 0;
+      val = Math.floor(val);
+      if (val > 999) val = 999;
+      qtyInput.value = String(val);
+      state.qty.set(p.id, val);
+      renderSummary();
+      setStatus("");
+    });
+
+    qtyWrap.appendChild(qtyLabel);
+    qtyWrap.appendChild(qtyInput);
+
+    pick.appendChild(document.createElement("span"));
+    pick.appendChild(qtyWrap);
+
+    body.appendChild(title);
+    body.appendChild(meta);
+    body.appendChild(pick);
+
+    card.appendChild(img);
+    card.appendChild(body);
+
+    host.appendChild(card);
+  }
+}
+
+function renderSummary() {
+  const t = i18n[state.lang];
+  const box = $("summary");
+  const selected = getSelectedItems();
+
+  if (!selected.length) {
+    box.textContent = t.emptySummary;
+    $("btnSubmit").disabled = true;
+    $("btnDownloadPdf").disabled = true;
+    return;
+  }
+
+  const lines = selected.map(({ product, qty }) => `• ${productLabel(product)} (${product.id}) × ${qty}`);
+  box.textContent = lines.join("\n");
+
+  $("btnSubmit").disabled = false;
+  $("btnDownloadPdf").disabled = false;
+}
+
+function buildOrderText() {
+  const selected = getSelectedItems();
+
+  const name = $("customerName").value.trim();
+  const email = $("customerEmail").value.trim();
+  const company = $("customerCompany").value.trim();
+  const notes = $("notes").value.trim();
+
+  const lines = [];
+  lines.push(`Language: ${state.lang.toUpperCase()}`);
+  lines.push(`Name: ${name}`);
+  if (email) lines.push(`Email: ${email}`);
+  lines.push(`Company: ${company}`);
+  if (notes) lines.push(`Notes: ${notes}`);
+  lines.push("");
+  lines.push("Items:");
+  for (const { product, qty } of selected) {
+    lines.push(`- ${productLabel(product)} (${product.id}) x ${qty}`);
+  }
+  return lines.join("\n");
+}
+
+async function generatePdfBlob() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+  const title = state.lang === "de" ? "Bestellung" : "Commande";
+  doc.setFontSize(14);
+  doc.text(title, 40, 50);
+
+  doc.setFontSize(10);
+  const text = buildOrderText();
+  const lines = doc.splitTextToSize(text, 515);
+  doc.text(lines, 40, 80);
+
+  return doc.output("blob");
+}
+
+function validateRequiredFields() {
+  const nameOk = $("customerName").value.trim().length > 0;
+  const companyOk = $("customerCompany").value.trim().length > 0;
+
+  // Email is optional
+  const email = $("customerEmail").value.trim();
+  const emailOk = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  return nameOk && companyOk && emailOk;
+}
+
+async function downloadPdf() {
+  const selected = getSelectedItems();
+  if (!selected.length) {
+    setStatus(i18n[state.lang].errSelect, true);
+    return;
+  }
+
+  if (!validateRequiredFields()) {
+    setStatus(i18n[state.lang].errRequired, true);
+    return;
+  }
+
+  const blob = await generatePdfBlob();
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `order_${Date.now()}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+  setStatus("");
+}
+
+async function submitToWeb3Forms() {
+  const t = i18n[state.lang];
+
+  if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY.includes("PUT_")) {
+    setStatus(t.errKey, true);
+    return;
+  }
+
+  // Honeypot check
+  if (($("website").value || "").trim().length > 0) {
+    setStatus(t.errHoneypot, true);
+    return;
+  }
+
+  const selected = getSelectedItems();
+  if (!selected.length) {
+    setStatus(t.errSelect, true);
+    return;
+  }
+
+  if (!validateRequiredFields()) {
+    setStatus(t.errRequired, true);
+    return;
+  }
+
+  setStatus(t.sending);
+
+  const pdfBlob = await generatePdfBlob();
+  const pdfFile = new File([pdfBlob], `order_${Date.now()}.pdf`, { type: "application/pdf" });
+
+  const name = $("customerName").value.trim();
+  const email = $("customerEmail").value.trim();
+  const company = $("customerCompany").value.trim();
+  const notes = $("notes").value.trim();
+
+  const fd = new FormData();
+  fd.append("access_key", WEB3FORMS_ACCESS_KEY);
+
+  // Email metadata
+  fd.append("subject", state.lang === "de" ? "Neue Bestellung" : "Nouvelle commande");
+  fd.append("from_name", name || "Customer");
+
+  // If provided, use as reply-to/email field for convenience
+  if (email) fd.append("email", email);
+
+  fd.append("customerCompany", company);
+  if (notes) fd.append("notes", notes);
+
+  // Main message
+  fd.append("message", buildOrderText());
+
+  // Attach PDF
+  fd.append("attachment", pdfFile);
+
+  const res = await fetch(WEB3FORMS_ENDPOINT, { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || data.success === false) {
+    setStatus(`Error: ${data.message || res.statusText}`, true);
+    return;
+  }
+
+  setStatus(t.sent);
+}
+
+async function init() {
+  // Load products
+  const r = await fetch("products.json", { cache: "no-store" });
+  state.products = await r.json();
+
+  // Events
+  $("btnDE").addEventListener("click", () => setLang("de"));
+  $("btnFR").addEventListener("click", () => setLang("fr"));
+
+  $("search").addEventListener("input", (e) => renderProducts(e.target.value || ""));
+
+  $("btnDownloadPdf").addEventListener("click", downloadPdf);
+
+  // Re-validate on typing
+  ["customerName", "customerEmail", "customerCompany", "notes"].forEach(id => {
+    $(id).addEventListener("input", () => setStatus(""));
+  });
+
+  $("orderForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await submitToWeb3Forms();
+    } catch (err) {
+      setStatus(`Error: ${String(err)}`, true);
+    }
+  });
+
+  setLang("de");
+  renderSummary();
+}
+
+init();
