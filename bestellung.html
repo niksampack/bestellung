@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SamPack Order</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; --text: #333; --unit-color: #0d47a1; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); -webkit-tap-highlight-color: transparent; }
         
         /* Header */
@@ -29,11 +29,15 @@
         .product-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid transparent; transition: border 0.2s; }
         .product-card.in-cart { border-color: var(--accent); background: #fdfdfd; }
         
-        .prod-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; margin-right: 15px; background: #eee; }
         .prod-info { flex: 1; min-width: 0; }
         .prod-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; line-height: 1.3; }
-        .prod-detail { font-size: 0.85rem; color: #888; display: flex; align-items: center; gap: 5px; }
+        
+        .prod-detail { font-size: 0.85rem; color: #888; display: flex; align-items: center; gap: 8px; }
         .prod-code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #555; }
+        
+        /* Unit Style (Blue) */
+        .prod-unit { color: var(--unit-color); font-weight: 900; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        
         .prod-price { color: var(--accent); font-weight: 800; font-size: 1.1rem; margin-top: 6px; }
 
         /* Controls */
@@ -41,9 +45,11 @@
         .btn-qty { width: 36px; height: 36px; border: none; background: white; border-radius: 10px; font-size: 20px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); touch-action: manipulation; }
         .btn-qty:active { transform: scale(0.95); background: #eee; }
         
-        .qty-input { width: 40px; height: 36px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.1rem; color: #333; -moz-appearance: textfield; padding: 0; }
+        /* QUANTITY INPUT STYLE (Blue) */
+        .qty-input { width: 40px; height: 36px; border: none; background: transparent; text-align: center; font-weight: 900; font-size: 1.2rem; color: var(--unit-color); -moz-appearance: textfield; padding: 0; }
         .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .qty-input:focus { outline: none; background: #e9ecef; border-radius: 6px; }
+        .qty-input::placeholder { color: #ccc; font-weight: normal; } /* Placeholder remains grey */
 
         /* Cart Bar */
         .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 200; backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
@@ -62,8 +68,9 @@
         
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.9rem; color: #555; }
-        .form-group input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; transition: border 0.2s; }
-        
+        .form-group input, .form-group textarea { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; transition: border 0.2s; }
+        .form-group textarea { resize: vertical; font-family: inherit; }
+
         .order-summary { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 0.95rem; max-height: 200px; overflow-y: auto; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #e0e0e0; padding-bottom: 8px; }
 
@@ -107,6 +114,15 @@
         <div class="form-group"><label id="lbl-name">Firma / Name *</label><input type="text" id="customerName" placeholder="..."></div>
         <div class="form-group"><label id="lbl-address">Adresse</label><input type="text" id="customerAddress" placeholder="..."></div>
         <div class="form-group"><label id="lbl-date">Datum</label><input type="date" id="deliveryDate"></div>
+        
+        <div class="form-group">
+            <label id="lbl-note">Bemerkungen / Note</label>
+            <textarea id="customerNote" rows="3" placeholder="..."></textarea>
+        </div>
+        <div class="form-group">
+            <label id="lbl-upload">Foto / File (Email Only)</label>
+            <input type="file" id="orderAttachment" accept="image/*,application/pdf">
+        </div>
 
         <button class="btn-whatsapp" onclick="sendWhatsapp()">WhatsApp</button>
         <button class="btn-email" onclick="sendEmail()">Email</button>
@@ -114,7 +130,7 @@
 </div>
 
 <script>
-    // --- 121 PRODUCTS DATA (Corrected List) ---
+    // --- 121 PRODUCTS DATA ---
     const products = [
     { id: "001F", cat: "Food", nameDE: "Pommes, Fine Quality-10 M", nameFR: "Pommes Frites (10mm)", price: 3.6, unit: "Kg" },
     { id: "NC-01", cat: "Food", nameDE: "Chicken Nugget 12 KG", nameFR: "Nuggets de poulet (12kg)", price: 102, unit: "Packung" },
@@ -239,8 +255,18 @@
     ];
 
     const translations = {
-        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firmenname / Ihr Name", address: "Lieferadresse", date: "Lieferdatum", items: "Artikel", whatsapp_msg: "Neue Bestellung:", email_sent: "Bestellung gesendet!", fill_all: "Bitte Namen eingeben!", all: "Alle" },
-        fr: { view_cart: "Panier >", checkout_title: "Vérifier la commande", name: "Nom de l'entreprise", address: "Adresse de livraison", date: "Date de livraison", items: "Articles", whatsapp_msg: "Nouvelle commande :", email_sent: "Commande envoyée !", fill_all: "Nom requis !", all: "Tous" }
+        de: { view_cart: "Warenkorb >", checkout_title: "Bestellung prüfen", name: "Firmenname / Ihr Name", address: "Lieferadresse", date: "Lieferdatum", note: "Bemerkungen", upload: "Foto hochladen", items: "Artikel", whatsapp_msg: "Neue Bestellung:", email_sent: "Bestellung gesendet!", fill_all: "Bitte Namen eingeben!", all: "Alle" },
+        fr: { view_cart: "Panier >", checkout_title: "Vérifier la commande", name: "Nom de l'entreprise", address: "Adresse de livraison", date: "Date de livraison", note: "Remarques", upload: "Télécharger photo", items: "Articles", whatsapp_msg: "Nouvelle commande :", email_sent: "Commande envoyée !", fill_all: "Nom requis !", all: "Tous" }
+    };
+
+    // --- Unit Translation Map ---
+    const unitMap = {
+        "Packung": { de: "Packung", fr: "Paquet" },
+        "Pakung": { de: "Packung", fr: "Paquet" },
+        "Pakung ": { de: "Packung", fr: "Paquet" },
+        "Kg": { de: "Kg", fr: "Kg" },
+        "Stk": { de: "Stk", fr: "Pcs" },
+        "Box": { de: "Box", fr: "Boîte" }
     };
 
     let cart = {};
@@ -254,11 +280,15 @@
         document.getElementById('btn-de').className = lang === 'de' ? 'active' : '';
         document.getElementById('btn-fr').className = lang === 'fr' ? 'active' : '';
         const t = translations[lang];
+        
         document.getElementById('lbl-view-cart').innerText = t.view_cart;
         document.getElementById('lbl-checkout-title').innerText = t.checkout_title;
         document.getElementById('lbl-name').innerText = t.name;
         document.getElementById('lbl-address').innerText = t.address;
         document.getElementById('lbl-date').innerText = t.date;
+        document.getElementById('lbl-note').innerText = t.note;
+        document.getElementById('lbl-upload').innerText = t.upload + (lang === 'de' ? " (Nur Email)" : " (Email seulement)");
+
         document.getElementById('searchInput').placeholder = lang === 'de' ? "Suchen..." : "Rechercher...";
         renderCategories(); renderProducts();
     }
@@ -293,13 +323,22 @@
         products.forEach(p => {
             const name = currentLang === 'de' ? p.nameDE : p.nameFR;
             const qty = cart[p.id] || 0;
-            // Image Logic: Use product ID for image name
             const imgPath = `https://niksampack.github.io/images/${p.id}.jpg`;
+            
+            // Resolve Unit
+            let unitLabel = p.unit;
+            if (unitMap[p.unit]) {
+                unitLabel = unitMap[p.unit][currentLang];
+            }
+
             const html = `
             <div class="product-card ${qty > 0 ? 'in-cart' : ''}" data-cat="${p.cat}" data-name="${name}" data-id="${p.id}" id="card-${p.id}">
                 <div class="prod-info">
                     <div class="prod-name">${name}</div>
-                    <div class="prod-detail"><span class="prod-code">#${p.id}</span> ${p.unit}</div>
+                    <div class="prod-detail">
+                        <span class="prod-code">#${p.id}</span>
+                        <span class="prod-unit">${unitLabel}</span>
+                    </div>
                     <div class="prod-price">${p.price.toFixed(2)}</div>
                 </div>
                 <div class="controls">
@@ -368,13 +407,23 @@
         const name = document.getElementById('customerName').value;
         const address = document.getElementById('customerAddress').value;
         const date = document.getElementById('deliveryDate').value;
+        const note = document.getElementById('customerNote').value;
+        
         const t = translations[currentLang];
-        let text = `*${t.whatsapp_msg}*\n👤 ${name}\n📍 ${address}\n📅 ${date}\n\n`;
+        let text = `*${t.whatsapp_msg}*\n👤 ${name}\n📍 ${address}\n📅 ${date}\n`;
+        if(note) text += `📝 Note: ${note}\n`;
+        text += `\n`;
+        
         let total = 0;
         for (const [id, qty] of Object.entries(cart)) {
             const p = products.find(x => x.id === id);
             const pName = currentLang === 'de' ? p.nameDE : p.nameFR;
-            text += `▪️ ${qty}x ${pName} [Code:${p.id}]\n`;
+            
+            // Resolve Unit
+            let unitLabel = p.unit;
+            if (unitMap[p.unit]) unitLabel = unitMap[p.unit][currentLang];
+            
+            text += `▪️ ${qty}x ${pName} (${unitLabel}) [Code:${p.id}]\n`;
             total += p.price * qty;
         }
         text += `\n*Total: ${total.toFixed(2)} CHF*`;
@@ -406,11 +455,19 @@
 
             formData.append("subject", `Bestellung: ${name}`);
             formData.append("message", getOrderText());
+            
+            const fileInput = document.getElementById('orderAttachment');
+            if(fileInput.files.length > 0) {
+                formData.append("attachment", fileInput.files[0]);
+            }
+
             const res = await fetch("https://api.web3forms.com/submit", { method: "POST", body: formData });
             if (res.ok) {
                 alert(translations[currentLang].email_sent);
                 closeCheckout();
                 cart = {};
+                document.getElementById('customerNote').value = "";
+                document.getElementById('orderAttachment').value = "";
                 products.forEach(p => updateUI(p.id));
             } else { alert("Error."); }
         } catch (e) { alert("Error."); }
